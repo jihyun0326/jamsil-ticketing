@@ -990,7 +990,9 @@ $('startBtn').addEventListener('click', () => {
   introTimer = setInterval(tickIntro, 20);
   tickIntro();
 });
-$('cancelBtn').addEventListener('click', () => {});
+/* 닫기 — 설정 팝업만 닫는다. 아래 버튼을 누르면 다시 열린다 */
+$('cancelBtn').addEventListener('click', () => { $('startDim').hidden = true; });
+$('startDim').addEventListener('click', e => { if (e.target === $('startDim')) $('startDim').hidden = true; });
 function tickIntro() {
   if (phaseIntro !== 'count') return;
   const left = openAt - now();
@@ -1006,6 +1008,7 @@ function tickIntro() {
 }
 /* 예매하기 — 켜지기 전 클릭은 무시하고, 켜진 뒤 첫 클릭만 반영한다 */
 $('bookBtn').addEventListener('pointerdown', e => {
+  if (phaseIntro === 'idle') { $('startDim').hidden = false; return; }   // 설정을 닫았으면 다시 연다
   if (phaseIntro === 'count') { preClicks++; return; }
   /* 몰림으로 응답이 늦는 동안 예매하기를 또 누르면 앞 요청은 버려지고 새 요청이 들어간다.
      순번은 마지막으로 누른 시각 기준으로 다시 정해지고, 응답 대기도 처음부터 다시 걸린다 */
