@@ -1,0 +1,2193 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>티켓팅 플로우 테스트</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;700&display=swap">
+<style>
+:root {
+  --nt-ink: #191f28; --nt-sub: #6b7684; --nt-locked-bg: #f2f4f6; --nt-locked-ink: #b0b8c1;
+  --nt-primary: #3182f6; --nt-plan-bg: #edeff3; --nt-line: #e5e8eb;
+  --g50: #f9fafb; --g100: #f2f4f6; --g200: #e5e8eb; --g400: #b0b8c1; --g500: #8b95a1; --g600: #6b7684; --g700: #4e5968; --g800: #333d4b; --g900: #191f28;
+  --blue50: #e8f3ff; --blue600: #1b64da; --red: #f04452;
+}
+* { box-sizing: border-box; margin: 0; padding: 0 }
+[hidden] { display: none !important }
+html, body { height: 100% }
+body { font-family: Pretendard, ui-sans-serif, system-ui, -apple-system, 'Apple SD Gothic Neo', sans-serif; color: var(--nt-ink); line-height: 1.5; -webkit-font-smoothing: antialiased; background: #fff; }
+ul { list-style: none }
+button { font-family: inherit; border: 0; background: none; cursor: pointer; color: inherit }
+.nt-screen { display: none }
+.nt-screen.is-active { display: block }
+
+/* ═══ 0) 예매 대기 화면 — 제목 · 포스터 · 경기명 · 버튼을 가운데 세로로 ═══ */
+#screen-intro.is-active { display: flex; flex-direction: column; align-items: center; min-height: 100dvh; padding: 0 20px 40px;
+  background: linear-gradient(180deg, #eaedf5 0%, #f3f4f8 32%, #fff 52%, #fff 100%); }
+.in-title { margin-top: max(13vh, 76px); font-size: 20px; font-weight: 700; color: #1b1c1f; text-align: center; letter-spacing: -.3px }
+.in-poster { margin-top: 44px; width: 190px; height: 254px; border-radius: 18px; border: 3px solid #fff; overflow: hidden; position: relative; color: #fff;
+  box-shadow: 0 10px 24px rgba(27, 28, 31, .14);
+  background: radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.28), transparent 60%), linear-gradient(180deg, #2b3a63 0%, #1c2a4a 55%, #10301f 100%); }
+.in-poster .p-top { position: absolute; top: 14px; left: 0; right: 0; text-align: center; font-size: 8px; letter-spacing: 2px; font-weight: 700; opacity: .85 }
+.in-poster .p-field { position: absolute; left: 50%; top: 52px; width: 120px; height: 120px; margin-left: -60px; border-radius: 120px 120px 0 0; background: #2f7a49; overflow: hidden }
+.in-poster .p-field::after { content: ""; position: absolute; left: 50%; bottom: -26px; width: 64px; height: 64px; margin-left: -32px; background: #c69a6b; transform: rotate(45deg); }
+.in-poster .p-vs { position: absolute; left: 0; right: 0; bottom: 46px; text-align: center; font-size: 30px; font-weight: 900; letter-spacing: 1px; line-height: 1 }
+.in-poster .p-vs small { font-size: 13px; font-weight: 700; margin: 0 6px; opacity: .8 }
+.in-poster .p-meta { position: absolute; left: 12px; bottom: 12px; font-size: 9px; font-weight: 700; line-height: 1.4 }
+.in-poster .p-meta span { display: block; font-weight: 500; opacity: .75 }
+.in-name { margin-top: 26px; font-size: 15px; color: #1b1c1f; text-align: center }
+.in-btn { margin-top: 44px; width: min(560px, 100%); height: 56px; border-radius: 16px; background: var(--nt-locked-bg); color: var(--nt-locked-ink); font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums }
+.in-btn.is-open { background: linear-gradient(180deg, #3d8bff 0%, #2b74ec 100%); color: #fff; box-shadow: 0 10px 24px rgba(49,130,246,.35) }
+.in-btn.is-locked { cursor: default }
+.in-note { margin-top: 12px; font-size: 11.5px; color: #b0b4bf; text-align: center }
+@media (max-width: 600px) { .in-title { margin-top: max(10vh, 72px) } .in-poster { margin-top: 34px } .in-btn { margin-top: 36px } }
+
+/* 시작 설정 — 토스식 바텀시트 (PC는 가운데) */
+.in-dim { position: fixed; inset: 0; z-index: 20; background: rgba(12, 18, 32, .42); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 20px; animation: fade .2s ease }
+@keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes rise { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+.in-card { width: min(480px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; background: #fff; border-radius: 26px; padding: 28px 24px 20px; box-shadow: 0 0 0 1px rgba(49,130,246,.06), 0 28px 70px rgba(12,18,32,.26), 0 6px 18px rgba(12,18,32,.08); animation: rise .28s cubic-bezier(.2,.8,.2,1) }
+.sh-handle { display: none; width: 40px; height: 4px; border-radius: 2px; background: var(--g200); margin: -14px auto 18px }
+@media (max-width: 600px) {
+  .in-dim { align-items: flex-end; padding: 0 }
+  .in-card { width: 100%; max-height: 92dvh; border-radius: 24px 24px 0 0; padding: 24px 20px calc(16px + env(safe-area-inset-bottom, 0px)) }
+  .sh-handle { display: block }
+}
+.sh-title { font-size: 22px; font-weight: 700; color: var(--g900); letter-spacing: -.4px; line-height: 1.4 }
+.sh-desc { margin-top: 6px; font-size: 15px; color: var(--g600); line-height: 1.5 }
+.cf-groups { margin-top: 28px; display: grid; gap: 24px }
+.cf-group { border: 0; padding: 0; margin: 0; min-width: 0 }
+.cf-group legend { padding: 0; margin-bottom: 10px; font-size: 15px; font-weight: 600; color: var(--g700) }
+.cf-opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px }
+#crowdSeg .cf-opts { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)) }
+#wantSeg .cf-opts { grid-template-columns: repeat(4, minmax(0, 1fr)) }
+.cf-radio { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 48px; padding: 12px 14px; border-radius: 12px; background: var(--g100); cursor: pointer;
+  font-size: 15px; font-weight: 500; color: var(--g700); line-height: 1.3; word-break: keep-all; transition: background .15s, color .15s }
+.cf-radio:hover { background: var(--g200) }
+.cf-radio input { position: absolute; opacity: 0; pointer-events: none }
+.cf-radio::after { content: ""; flex: none; width: 18px; height: 18px; border-radius: 50%; background: transparent }
+.cf-radio:has(input:checked) { background: #fff; color: var(--blue600); font-weight: 700; box-shadow: 0 0 0 1.5px var(--nt-primary), 0 6px 16px rgba(49,130,246,.18) }
+.cf-radio:has(input:checked)::after { background: var(--nt-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M5 9.2l2.6 2.6L13 6.4' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 18px no-repeat }
+.cf-radio:has(input:focus-visible) { outline: 2px solid var(--nt-primary); outline-offset: 2px }
+@media (max-width: 600px) { .cf-groups { gap: 20px } .cf-radio { min-height: 46px; padding: 10px 12px; font-size: 14.5px } #wantSeg .cf-radio::after { display: none } }
+.in-rec { margin-top: 24px; font-size: 13px; color: var(--g500); text-align: center; line-height: 1.5 }
+.in-start { margin-top: 14px; width: 100%; height: 56px; border-radius: 16px; background: linear-gradient(180deg, #3d8bff 0%, #2b74ec 100%); color: #fff; font-size: 17px; font-weight: 600; box-shadow: 0 8px 20px rgba(49,130,246,.35); transition: filter .15s }
+.in-start:active { filter: brightness(.94) }
+.in-cancel { display: block; width: 100%; margin-top: 6px; height: 48px; border-radius: 14px; color: var(--g600); font-size: 15px; font-weight: 500 }
+
+/* 보안문자부터 연습 */
+.in-quick { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); right: 16px; z-index: 25; height: 38px; padding: 0 14px; border-radius: 99px; background: #fff; color: #3182f6; font-size: 13.5px; font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(49,130,246,.18), 0 6px 16px rgba(25,31,40,.12) }
+.in-quick:hover { background: #f4f8ff }
+#readyDim { z-index: 40 }
+.rd-card { width: min(320px, 100%); padding: 30px 24px 26px; border-radius: 26px; background: #fff; text-align: center; animation: pop .2s cubic-bezier(.2,.8,.2,1);
+  box-shadow: 0 0 0 1px rgba(49,130,246,.06), 0 28px 70px rgba(12,18,32,.28), 0 6px 18px rgba(12,18,32,.08) }
+.rd-title { font-size: 22px; font-weight: 800; color: #191f28 }
+.rd-sub { margin-top: 6px; font-size: 14.5px; color: #6b7684; line-height: 1.5 }
+.rd-num { display: grid; place-items: center; width: 96px; height: 96px; margin: 22px auto 0; border-radius: 50%; font-size: 48px; font-weight: 800; color: #fff;
+  background: linear-gradient(160deg, #4c94ff, #1b5fd0); box-shadow: 0 12px 28px rgba(49,130,246,.4); font-variant-numeric: tabular-nums }
+.rd-rank { margin-top: 18px; padding: 12px 14px; border-radius: 12px; background: #f2f4f6; font-size: 13px; color: #4e5968; line-height: 1.6 }
+.rd-rank b { color: #191f28 }
+
+/* 자동배정 */
+.nt-chips { position: absolute; left: 16px; bottom: 16px; display: flex; gap: 8px; z-index: 2 }
+.nt-chips .nt-grade-chip { position: static }
+.nt-auto-chip { height: 36px; padding: 0 14px; border-radius: 9999px; background: #3182f6; color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 6px 14px rgba(49,130,246,.35) }
+#autoDim { z-index: 30 }
+.cf-radio.is-out { opacity: .4; pointer-events: none }
+.cf-radio small { margin-left: auto; margin-right: 4px; font-size: 12px; font-weight: 600; color: #8b95a1; font-variant-numeric: tabular-nums }
+.au-note { margin-top: 14px; font-size: 13px; color: #8b95a1; line-height: 1.55 }
+
+/* 연습 규칙 — 어떻게 만들었는지 보여주는 시트 */
+.in-rule { margin-top: 10px; padding: 6px 10px; font-size: 13px; font-weight: 600; color: var(--g600); border-radius: 8px }
+.in-rule:hover { background: var(--g100) }
+.sh-link { margin-top: 8px; padding: 0; font-size: 13.5px; font-weight: 600; color: var(--nt-primary) }
+#ruleDim { z-index: 30 }
+.rule-card { width: min(560px, 100%); padding: 28px 24px 20px; text-align: left }
+.rule-card .sh-desc { margin-bottom: 4px }
+.rl-sec { margin-top: 22px }
+.rl-sec h3 { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; color: var(--g900) }
+.rl-sec h3 i { flex: none; width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center; background: var(--blue50); color: var(--blue600); font-size: 12px; font-style: normal; font-weight: 800 }
+.rl-sec ul { margin-top: 8px; display: grid; gap: 6px }
+.rl-sec li { position: relative; padding-left: 12px; font-size: 14px; line-height: 1.6; color: var(--g700) }
+.rl-sec li::before { content: ""; position: absolute; left: 2px; top: 10px; width: 4px; height: 4px; border-radius: 50%; background: var(--g400) }
+.rl-sec b { color: var(--g900); font-weight: 600 }
+.rl-flow { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px }
+.rl-flow span { padding: 6px 10px; border-radius: 99px; background: var(--g100); font-size: 12.5px; font-weight: 600; color: var(--g700) }
+.rl-flow span:not(:last-child)::after { content: "›"; margin-left: 6px; color: var(--g400) }
+.rl-table { margin-top: 10px; width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums }
+.rl-table th, .rl-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--g100) }
+.rl-table th { background: var(--g50); color: var(--g600); font-weight: 600 }
+.rl-table td { color: var(--g800) }
+.rl-wrap { overflow-x: auto; border-radius: 12px; box-shadow: 0 0 0 1px var(--g100) }
+.rl-foot { margin-top: 22px; padding: 12px 14px; border-radius: 12px; background: var(--g50); font-size: 12.5px; line-height: 1.6; color: var(--g600) }
+.rl-close { margin-top: 16px; width: 100%; height: 52px; border-radius: 16px; background: var(--g100); color: var(--g700); font-size: 16px; font-weight: 600 }
+
+/* ═══ 1) 대기 순서 확인 중 ═══ */
+.nt-loading { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 32px; padding: 0 20px 80px; background: #fff; }
+.nt-spinner { width: 68px; height: 68px; border: 6px solid var(--nt-locked-bg); border-top-color: var(--nt-primary); border-radius: 50%; animation: nt-spin 1s linear infinite; }
+@keyframes nt-spin { to { transform: rotate(360deg) } }
+.nt-loading h2 { text-align: center; font-size: 18px; font-weight: 700; line-height: 27px; }
+.nt-loading h2 span, .nt-loading h2 strong { display: block }
+.nt-loading h2 strong { color: var(--nt-primary) }
+.nt-retry { height: 52px; padding: 0 40px; border-radius: 14px; background: var(--nt-primary); color: #fff; font-size: 16px; font-weight: 700 }
+
+/* ═══ 2) 대기열 ═══ */
+.nt-wait { --nt-point: var(--nt-primary); max-width: 540px; margin: 0 auto; }
+.nt-wait.is-almost { --nt-point: #FF322E }
+.nt-wait-content { padding: 0 20px 20px }
+.nt-wait-title { padding: 10px 4px 20px }
+.nt-wait-title h2 { font-size: 20px; font-weight: 700 }
+.nt-wait-title h2 span { display: block }
+.nt-wait-title h2 strong { display: block; color: var(--nt-point); transition: color .25s; }
+.nt-goods { margin-top: 6px; font-size: 15px; color: #666 }
+.nt-status { padding: 0 20px; background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(27, 28, 31, .08); }
+.nt-status-main { padding: 30px 0 20px; border-bottom: 1px solid #f3f3f3 }
+.nt-status-text { text-align: center }
+.nt-status-text h3 { font-size: 15px; font-weight: 400; color: #666 }
+.nt-status-text strong { display: block; margin: 2px 0 12px; font-size: 56px; font-weight: 700; line-height: 1; letter-spacing: -.02em; }
+.nt-bar { position: relative; height: 28px; background: #f8f8f8; border-radius: 14px; overflow: hidden; }
+.nt-bar-active { position: relative; z-index: 1; width: 0; min-width: 28px; max-width: 100%; height: 28px; border-radius: 14px; background: var(--nt-point); transition: width .2s linear, background-color .25s; }
+.nt-ticket { position: absolute; top: 50%; right: 8px; width: 20px; height: 20px; margin-top: -10px; color: #ccc; transition: color .25s; }
+.nt-ticket svg { display: block; width: 20px; height: 20px }
+.nt-bar.is-done .nt-ticket { z-index: 2; color: #fff; animation: nt-pulse 2s infinite; }
+@keyframes nt-pulse { 0%, 100% { transform: scale(1) } 50% { transform: scale(.78) } }
+.nt-status-sub { padding: 16px 4px 20px; font-size: 15px }
+.nt-status-row { display: flex }
+.nt-status-row + .nt-status-row { margin-top: 4px }
+.nt-status-row h4 { font-weight: 400; color: #666 }
+.nt-status-row span { margin-left: auto; font-weight: 700 }
+.nt-status-row span[data-rate="100"] { color: #d32f2f }
+.nt-notice { padding: 16px 4px }
+.nt-notice li { position: relative; padding-left: 7px; margin-bottom: 3px; font-size: 13px; line-height: 20px; color: var(--nt-ink); }
+.nt-notice li::before { content: ""; position: absolute; left: 0; top: 8px; width: 3px; height: 3px; border-radius: 50%; background: #ccc; }
+
+/* ═══ 3) 좌석 선택 ═══ */
+#screen-seat.is-active { display: flex; flex-direction: column; height: 100dvh; }
+.nt-hdr { display: none; align-items: center; flex-shrink: 0; padding: 26px 40px 20px; background: #fff; box-shadow: 0 0 4px rgba(0, 0, 0, .05); }
+.nt-logo { font-size: 20px; font-weight: 800; color: var(--nt-primary) }
+.nt-hdr-menu { display: flex; align-items: center; gap: 20px; margin-left: auto }
+.nt-hdr-menu button { font-size: 14px; font-weight: 600 }
+.nt-hdr-div { width: 1px; height: 14px; background: var(--nt-line) }
+.nt-sub { position: relative; display: flex; align-items: center; flex-shrink: 0; gap: 8px; height: 50px; padding: 4px 16px; background: #fff; box-shadow: 0 2px 2px rgba(88, 71, 71, .06); }
+.nt-sub-title, .nt-sub-date { font-size: 15px; font-weight: 700; line-height: 24px }
+.nt-sub-date { color: var(--nt-sub) }
+.nt-sub-div { width: 1px; height: 14px; background: var(--nt-line) }
+.nt-sub-title { flex: 1 1 0; min-width: 0; font-size: 18px; line-height: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nt-sub-title, .nt-sub-div, .nt-sub-date, .nt-sub-chip { display: none }
+.nt-mo-title { flex: 1 1 0; min-width: 0; font-size: 18px; font-weight: 700; line-height: 22px }
+.nt-help { flex-shrink: 0; width: 20px; height: 20px; border: 1.4px solid var(--nt-sub); border-radius: 50%; color: var(--nt-sub); font-size: 12px; font-weight: 700; line-height: 1; }
+.nt-close { flex-shrink: 0; width: 24px; height: 24px; color: var(--nt-ink) }
+.nt-close svg { width: 100%; height: 100% }
+.nt-help-tip { position: absolute; top: 46px; right: 12px; z-index: 30; width: 268px; padding: 12px 14px; border-radius: 10px; background: #2b2d33; color: #fff; text-align: left; }
+.nt-help-tip strong { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 700 }
+.nt-help-tip p { font-size: 12.5px; line-height: 18px; color: #d7d9de }
+.nt-mo-card { flex-shrink: 0; margin: 12px 20px; padding: 12px 14px; border-radius: 12px; background: #fff; box-shadow: 0 1px 6px rgba(0, 0, 0, .07); }
+.nt-mo-card-title { font-size: 15px; font-weight: 700; line-height: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nt-mo-card-row { display: flex; align-items: center; gap: 8px; margin-top: 4px }
+.nt-mo-card-date { font-size: 13px; color: var(--nt-sub) }
+.nt-mo-card-chip { margin-left: auto; min-height: 28px; padding: 0 10px; border-radius: 9999px; background: #f2f3f6; color: #4a4f5b; font-size: 12px; font-weight: 700; }
+.nt-sub-chip { min-height: 32px; min-width: 64px; padding: 2px 8px; border: 1px solid var(--nt-line); border-radius: 9999px; font-size: 14px; font-weight: 700; background: #fff; }
+.nt-timer { flex-shrink: 0; margin-left: auto; padding-left: 8px; font-size: 18px; line-height: 22px; font-weight: 700; white-space: nowrap; }
+.nt-timer strong { display: inline-flex; align-items: center; line-height: 1.2; color: var(--nt-primary) }
+.nt-timer.is-urgent strong { color: #FF322E }
+.nt-timer-label { display: none }
+.nt-digit { display: inline-block; overflow: hidden; height: 1.2em; line-height: 1.2em }
+.nt-digit i { display: block; font-style: normal }
+.nt-digit.is-roll i { animation: nt-roll .26s cubic-bezier(.2, .8, .3, 1) }
+@keyframes nt-roll { from { transform: translateY(100%); opacity: .25 } to { transform: translateY(0); opacity: 1 } }
+.nt-seat-body { display: flex; flex-direction: column; flex: 1; min-height: 0 }
+.nt-plan { position: relative; flex: 1; min-height: 0; overflow: hidden; background: var(--nt-plan-bg); touch-action: none; user-select: none; -webkit-user-select: none; }
+.nt-map { position: absolute; top: 0; left: 0; width: 840px; height: 850px; transform-origin: 0 0; }
+.nt-map.is-moving { will-change: transform }
+.nt-map.is-moving .nt-seat-dot { pointer-events: none }
+.nt-layer { position: absolute; inset: 0; width: 100%; height: 100% }
+#seatLayer { display: none }
+.nt-map.is-seatlevel #blockLayer { display: none }
+.nt-map.is-seatlevel #seatLayer { display: block }
+/* 좌석은 동그라미. 빈 좌석은 등급색 옅게, 선택하면 진하게 채우고 테두리를 굵게 */
+.nt-seat-dot { stroke-width: .25; cursor: pointer }
+.nt-seat-dot.is-open { fill-opacity: .35 }
+.nt-seat-dot.is-sold { fill-opacity: 1; cursor: default }
+.nt-seat-dot.is-picked { fill-opacity: 1; stroke: #1b1c1f; stroke-width: .7; stroke-opacity: .9 }
+.blk { cursor: pointer }
+.nt-hint { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); padding: 6px 12px; border-radius: 9999px; background: rgba(27, 28, 31, .72); color: #fff; font-size: 12px; pointer-events: none; transition: opacity .2s; white-space: nowrap }
+.nt-grade-chip { position: absolute; left: 16px; bottom: 16px; height: 36px; padding: 0 14px; border-radius: 9999px; background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, .12); font-size: 13px; font-weight: 700; }
+.nt-grade-layer { position: absolute; left: 16px; bottom: 60px; min-width: 236px; padding: 14px 16px 12px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px rgba(25,31,40,.04), 0 12px 32px rgba(25,31,40,.18); font-size: 13px; }
+/* 등급별 잔여석 — 0.5초마다 갱신 */
+.rm-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 13px; font-weight: 700; color: #191f28 }
+.rm-live { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; font-size: 11px; font-weight: 700; color: #f04452 }
+.rm-live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: rm-blink 1.2s infinite }
+@keyframes rm-blink { 50% { opacity: .25 } }
+.rm-list li { display: grid; grid-template-columns: 10px 1fr auto auto; align-items: center; gap: 8px; padding: 5px 0; white-space: nowrap }
+.rm-list i { width: 10px; height: 10px; border-radius: 3px }
+.rm-list span { color: #4e5968 }
+.rm-list small { font-size: 11.5px; color: #8b95a1; font-variant-numeric: tabular-nums }
+.rm-list b { min-width: 56px; text-align: right; font-weight: 700; color: #191f28; font-variant-numeric: tabular-nums }
+.rm-list b.low { color: #e8590c }
+.rm-list b.out { color: #b0b8c1; font-weight: 600 }
+.nt-live { position: absolute; left: 12px; top: 12px; z-index: 2; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: rgba(255,255,255,.94);
+  box-shadow: 0 0 0 1px rgba(25,31,40,.05), 0 6px 18px rgba(25,31,40,.12); font-size: 12.5px; color: #4e5968; pointer-events: none; font-variant-numeric: tabular-nums }
+.nt-live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #f04452; animation: rm-blink 1.2s infinite }
+.nt-live b { font-size: 14px; font-weight: 800; color: #191f28 }
+.nt-live b.blue { color: #3182f6 }
+.nt-live i { width: 1px; height: 12px; background: #e5e8eb }
+.rm-entered { display: flex; align-items: baseline; gap: 6px; margin: -2px 0 8px; padding: 8px 10px; border-radius: 10px; background: #f2f4f6; font-size: 12.5px; color: #4e5968 }
+.rm-entered b { font-size: 14px; font-weight: 800; color: #3182f6; font-variant-numeric: tabular-nums }
+.rm-entered span { margin-left: auto; font-size: 11.5px; color: #8b95a1 }
+.gl-tabs { display: flex; gap: 4px; margin-bottom: 6px; padding: 3px; border-radius: 10px; background: #f2f4f6 }
+.gl-tabs button { flex: 1; height: 30px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8b95a1 }
+.gl-tabs button.on { background: #fff; color: #191f28; box-shadow: 0 1px 3px rgba(25,31,40,.1) }
+.gl-item { width: 100%; display: grid; grid-template-columns: 10px 1fr auto auto; align-items: center; gap: 8px; padding: 9px 8px; margin: 0 -8px; border-radius: 10px; text-align: left; font-size: 13.5px; white-space: nowrap; width: calc(100% + 16px) }
+.gl-item:hover { background: #f5f7fa }
+.gl-item.sel { background: #e8f3ff; box-shadow: inset 0 0 0 1.5px #3182f6 }
+.gl-item.is-out { cursor: default; opacity: .55 }
+.gl-item i { width: 10px; height: 10px; border-radius: 3px }
+.gl-item span { color: #333d4b; font-weight: 600 }
+.gl-item small { font-size: 11.5px; color: #8b95a1; font-variant-numeric: tabular-nums }
+.gl-item b { min-width: 56px; text-align: right; font-weight: 700; color: #191f28; font-variant-numeric: tabular-nums }
+.gl-item b.low { color: #e8590c } .gl-item b.out { color: #b0b8c1; font-weight: 600 }
+.rm-list li { display: block; padding: 0 }
+.gl-acts { display: grid; gap: 6px; margin-top: 10px }
+.gl-acts button { height: 46px; border-radius: 12px; font-size: 14.5px; font-weight: 700 }
+.gl-auto { background: linear-gradient(180deg, #3d8bff, #2b74ec); color: #fff; box-shadow: 0 6px 16px rgba(49,130,246,.3) }
+.gl-direct { background: #f2f4f6; color: #4e5968 }
+.gl-guide { margin-top: 8px; font-size: 12px; color: #8b95a1; text-align: center }
+.nt-grade-layer { max-height: min(70vh, 560px); overflow-y: auto; width: min(320px, calc(100vw - 32px)) }
+.nt-remain { display: none; padding: 20px 24px 14px; border-bottom: 8px solid #f2f4f6 }
+.blk { transition: fill-opacity .4s }
+.nt-zoom, .nt-zoom-fit { position: absolute; right: 16px; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, .12); overflow: hidden; }
+.nt-zoom { bottom: 74px; display: none; flex-direction: column }
+.nt-zoom-fit { bottom: 16px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center }
+.nt-zoom-fit:disabled { opacity: 0; visibility: hidden; pointer-events: none }
+.nt-zoom button { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.nt-zoom button + button { border-top: 1px solid #eee }
+.nt-zoom button:disabled, .nt-zoom-fit:disabled { color: #ccc; cursor: default }
+.nt-zoom-fit svg { width: 18px; height: 18px }
+.nt-minimap { position: absolute; right: 76px; bottom: 16px; width: 158px; height: 145px; border: 1px solid #e4e6ea; border-radius: 6px; background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, .12); overflow: hidden; opacity: 0; pointer-events: none; transition: opacity .3s; }
+.nt-minimap.is-on { opacity: 1; pointer-events: auto }
+.nt-mini-plan { display: block; width: 100%; height: 100% }
+.nt-mini-view { position: absolute; border: 1.5px solid var(--nt-primary); background: rgba(49, 130, 246, .16); pointer-events: none; }
+.nt-side { display: none; flex-direction: column; flex-shrink: 0; max-height: 42vh; background: #fff; border-top: 1px solid #eee; }
+.nt-seat-body.has-picked .nt-side { display: flex }
+.nt-sheet-arrow { flex-shrink: 0; height: 32px; display: flex; align-items: center; justify-content: center; color: #b6bac4; }
+.nt-sheet-arrow svg { width: 22px; height: 22px; transition: transform .2s }
+.nt-side.is-open .nt-sheet-arrow svg { transform: rotate(180deg) }
+.nt-side:not(.is-open) .nt-picked, .nt-side:not(.is-open) .nt-picked-empty { display: none }
+.nt-side-head { display: flex; align-items: center; padding: 16px 20px 10px }
+.nt-side h2 { font-size: 16px; font-weight: 700 }
+.nt-side h2 em { font-style: normal; margin-left: 2px; color: var(--nt-primary) }
+.nt-clear { margin-left: auto; font-size: 13px; color: var(--nt-sub); text-decoration: underline }
+.nt-picked { flex: 1; overflow-y: auto; padding: 0 20px }
+.nt-picked li { display: flex; align-items: baseline; gap: 8px; padding: 12px 0; border-bottom: 1px solid #f3f3f3; font-size: 14px; }
+.nt-picked li i { font-style: normal; font-weight: 700; color: var(--nt-primary); white-space: nowrap }
+.nt-picked li b { font-weight: 700 }
+.nt-picked li span { margin-left: auto; color: var(--nt-sub); white-space: nowrap }
+.nt-picked-del { flex-shrink: 0; width: 24px; height: 24px; margin-left: 4px; align-self: center; color: var(--nt-locked-ink); font-size: 13px; line-height: 1; }
+.nt-picked-empty { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; color: var(--nt-locked-ink); font-size: 14px; }
+.nt-done { flex-shrink: 0; height: 56px; margin: 0 20px 20px; border-radius: 12px; background: var(--nt-locked-bg); color: var(--nt-locked-ink); font-size: 16px; font-weight: 700; }
+.nt-done:enabled { background: var(--nt-primary); color: #fff }
+
+/* ─── 보안문자 · 예매확인 ─── */
+.nt-dim { position: fixed; inset: 0; z-index: 10; background: rgba(0, 0, 0, .53) }
+.nt-cap { position: fixed; z-index: 11; top: 50%; left: 50%; width: min(520px, calc(100vw - 32px)); height: min(562px, calc(100dvh - 32px)); transform: translate(-50%, -50%); display: flex; flex-direction: column; padding: 24px 20px 20px; border-radius: 16px; background: #fff; }
+.nt-cap h3 { padding: 0 4px 6px; font-size: 20px; font-weight: 700 }
+.nt-cap-sub { padding: 0 4px; font-size: 15px; color: #666 }
+.nt-cap-box { position: relative; display: flex; align-items: center; justify-content: center; height: 120px; margin: 16px 0 12px; border-radius: 4px; background: #eee; }
+.nt-cap-box canvas { display: block; width: 176px; height: 59px }
+.nt-cap-round { position: absolute; top: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: 1px solid #e4e6ea; border-radius: 50%; background: #fff; box-shadow: 0 0 8px rgba(0, 0, 0, .16); }
+.nt-cap-round.l { left: 12px }
+.nt-cap-round.r { right: 12px }
+.nt-cap-round svg { width: 20px; height: 20px }
+.nt-cap-input { width: 100%; height: 46px; padding: 0 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 15px; outline: none; }
+.nt-cap-input:focus { border-color: #b8bac0 }
+.nt-cap-input::placeholder { color: #a0a2a8 }
+.nt-cap-err { min-height: 18px; margin: 8px 4px 0; font-size: 13px; color: #FF322E }
+.nt-cap .nt-done { margin: auto 0 0; width: 100% }
+.nt-cf { height: auto; max-height: calc(100dvh - 32px); border-radius: 26px; padding: 28px 20px 16px; box-shadow: 0 0 0 1px rgba(49,130,246,.06), 0 28px 70px rgba(12,18,32,.26), 0 6px 18px rgba(12,18,32,.08) }
+.nt-cf h3 { font-size: 20px; letter-spacing: -.3px; color: var(--g900) }
+.nt-cf .nt-cap-sub { margin-top: 2px; color: var(--g600) }
+.nt-cf-list { margin: 20px 0 0; padding: 6px 16px; border-radius: 16px; background: var(--g50); overflow-y: auto }
+.nt-cf-list div { display: flex; gap: 12px; padding: 11px 0; font-size: 15px }
+.nt-cf-list div + div { border-top: 1px solid var(--g100) }
+.nt-cf-list dt { width: 72px; flex-shrink: 0; color: var(--g600) }
+.nt-cf-list dd { flex: 1; min-width: 0; color: var(--g800); text-align: right }
+.nt-cf-total { display: flex; align-items: baseline; padding: 18px 4px 20px; font-size: 16px; font-weight: 600; color: var(--g700) }
+.nt-cf-total b { margin-left: auto; font-size: 22px; font-weight: 700; color: var(--g900) }
+.nt-cf-btns { display: flex; gap: 8px }
+.nt-cf-btns .nt-done { margin: 0; flex: 1; height: 56px; border-radius: 16px; font-size: 17px; font-weight: 600 }
+.nt-cf-btns .nt-cf-prev { flex: 0 0 36%; background: var(--g100); color: var(--g700) }
+
+/* ─── 알림창 — 토스식 다이얼로그 ─── */
+#pkt-alert-overlay { display: none; position: fixed; inset: 0; background: rgba(12, 18, 32, .42); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 500000; align-items: center; justify-content: center; padding: 24px; }
+#pkt-alert-overlay.show { display: flex; animation: fade .15s ease; }
+#pkt-alert-box { width: 100%; max-width: 340px; border-radius: 24px; padding: 28px 20px 16px; background: #fff; box-shadow: 0 0 0 1px rgba(49,130,246,.06), 0 24px 60px rgba(12,18,32,.26), 0 4px 14px rgba(12,18,32,.08); animation: pop .2s cubic-bezier(.2,.8,.2,1); }
+@keyframes pop { from { transform: scale(.96); opacity: 0 } to { transform: none; opacity: 1 } }
+#pkt-alert-title { padding: 0 4px; font-size: 20px; font-weight: 700; color: var(--g900); line-height: 1.4; letter-spacing: -.3px }
+#pkt-alert-msg { padding: 0 4px; margin-top: 8px; font-size: 15px; color: var(--g700); line-height: 1.6; white-space: pre-line; }
+#pkt-alert-footer { display: flex; gap: 8px; margin-top: 24px; }
+.pkt-alert-btn { flex: 1; height: 52px; border-radius: 14px; font-size: 16px; font-weight: 600; }
+#pkt-alert-cancel { background: var(--g100); color: var(--g700); }
+#pkt-alert-confirm { background: linear-gradient(180deg, #3d8bff 0%, #2b74ec 100%); color: #fff; box-shadow: 0 6px 16px rgba(49,130,246,.32) }
+#pkt-alert-box.is-bad #pkt-alert-title { color: var(--g900) }
+
+/* ─── 결과 — 그라데이션 머리 + 큰 숫자로 강조 ─── */
+#pkt-result-overlay { position: fixed; inset: 0; background: rgba(12, 18, 32, .5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 400000; padding: 20px }
+#pkt-result-overlay.visible { display: flex; animation: fade .2s ease }
+.pkt-modal-card { width: min(400px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; background: #fff; border-radius: 26px;
+  box-shadow: 0 0 0 1px rgba(49,130,246,.06), 0 28px 70px rgba(12,18,32,.28), 0 6px 18px rgba(12,18,32,.08); animation: rise .32s cubic-bezier(.2,.8,.2,1) }
+@media (max-width: 600px) {
+  #pkt-result-overlay { align-items: flex-end; padding: 0 }
+  .pkt-modal-card { width: 100%; max-height: 94dvh; border-radius: 26px 26px 0 0 }
+}
+.rs-hero { position: relative; overflow: hidden; padding: 26px 24px 24px; color: #fff;
+  background: radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,.22) 0%, transparent 55%), linear-gradient(140deg, #4c94ff 0%, #3182f6 45%, #1b5fd0 100%) }
+.rs-hero.bad { background: radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,.14) 0%, transparent 55%), linear-gradient(140deg, #5d6878 0%, #434c5b 50%, #2c333f 100%) }
+.rs-hero::after { content: ""; position: absolute; right: -50px; bottom: -70px; width: 180px; height: 180px; border-radius: 50%; border: 22px solid rgba(255,255,255,.07) }
+.rs-tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.28); font-size: 12px; font-weight: 700; letter-spacing: .4px; backdrop-filter: blur(4px) }
+.rs-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px rgba(255,255,255,.9) }
+.rs-head { position: relative; z-index: 1; margin-top: 14px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px }
+.rs-big { font-size: 46px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 2px 14px rgba(0,0,0,.12) }
+.rs-big small { margin-left: 3px; font-size: 20px; font-weight: 600; opacity: .75; letter-spacing: 0 }
+.rs-word { font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.1 }
+.rs-grade { flex: none; width: 62px; height: 62px; border-radius: 18px; display: grid; place-items: center; background: #fff; color: #1b5fd0; font-size: 26px; font-weight: 900; letter-spacing: -1px;
+  box-shadow: 0 10px 24px rgba(10,40,110,.35), inset 0 -3px 0 rgba(49,130,246,.15) }
+.rs-desc { position: relative; z-index: 1; margin-top: 12px; font-size: 14px; line-height: 1.55; opacity: .9; white-space: pre-line }
+.rs-meta { position: relative; z-index: 1; margin-top: 10px; font-size: 12.5px; opacity: .72 }
+.rs-body { padding: 20px 20px 16px }
+.rs-label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--g700) }
+.rs-label span { font-weight: 500; color: var(--g500) }
+.rs-stack { margin-top: 10px; height: 12px; border-radius: 6px; overflow: hidden; display: flex; background: var(--g100); box-shadow: inset 0 1px 2px rgba(0,0,0,.06) }
+.rs-stack i { height: 100%; min-width: 3px }
+.rs-c1 { background: #bcd6fd } .rs-c2 { background: #7fb0fb } .rs-c3 { background: #3182f6 } .rs-c4 { background: #1b5fd0 } .rs-c5 { background: #0f3d8f }
+.rs-list { margin-top: 12px; display: grid }
+.rs-li { display: flex; align-items: center; gap: 8px; padding: 9px 2px; font-size: 14px }
+.rs-li + .rs-li { border-top: 1px solid var(--g100) }
+.rs-li i { width: 8px; height: 8px; border-radius: 3px }
+.rs-li span { color: var(--g600) }
+.rs-li b { margin-left: auto; font-weight: 700; color: var(--g800); font-variant-numeric: tabular-nums }
+.rs-li em { font-style: normal; font-size: 11px; font-weight: 700; color: #e8590c; background: #fff2e8; padding: 2px 6px; border-radius: 6px }
+.rs-li.top b { color: #e8590c }
+.rs-extra { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--g50); font-size: 12.5px; color: var(--g600); line-height: 1.6 }
+.rs-stats { margin-top: 14px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px }
+.rs-stat { padding: 12px 10px; border-radius: 14px; background: #fff; text-align: center; box-shadow: 0 0 0 1px var(--g100), 0 4px 12px rgba(12,18,32,.06) }
+.rs-stat span { display: block; font-size: 11.5px; color: var(--g500) }
+.rs-stat b { display: block; margin-top: 3px; font-size: 16px; font-weight: 800; color: var(--g900); font-variant-numeric: tabular-nums }
+.rs-btns { margin-top: 18px; display: flex; gap: 8px }
+.rs-btns button { flex: 1; height: 56px; border-radius: 16px; font-size: 17px; font-weight: 600; transition: transform .1s, filter .15s }
+.rs-btns button:active { transform: translateY(1px) }
+.rs-btns .ghost { background: var(--g100); color: var(--g700) }
+.rs-btns .main { background: linear-gradient(180deg, #3d8bff 0%, #2b74ec 100%); color: #fff; box-shadow: 0 8px 20px rgba(49,130,246,.35) }
+
+@media (min-width: 1025px) {
+  .nt-remain { display: block }
+  .nt-wait-content { padding: 0 30px 30px }
+  .nt-wait-title { padding: 36px 0 24px }
+  .nt-wait-title h2 { font-size: 22px }
+  .nt-goods { margin-top: 8px; font-size: 17px }
+  .nt-status-text strong { font-size: 50px }
+  .nt-status-sub { padding-bottom: 24px; font-size: 17px }
+  .nt-notice li { font-size: 15px }
+  .nt-hdr { display: flex }
+  .nt-sub { height: auto; padding: 12px 420px 12px 40px }
+  .nt-sub-title, .nt-sub-div, .nt-sub-date { display: block }
+  .nt-sub-chip { display: inline-block; font-size: 15px }
+  .nt-sub-title, .nt-sub-date { font-size: 18px; line-height: 36px }
+  .nt-sub-title { flex: 0 1 auto; overflow: visible; white-space: normal }
+  .nt-sub-div { margin: 0 4px }
+  .nt-timer { position: absolute; top: 50%; right: 56px; margin: 0; padding-left: 0; font-size: 18px; line-height: 36px; transform: translateY(-50%) }
+  .nt-timer-label { display: inline }
+  .nt-mo-title, .nt-close, .nt-mo-card { display: none }
+  .nt-zoom { display: flex }
+  .nt-zoom-fit:disabled { opacity: 1; visibility: visible; pointer-events: auto }
+  .nt-side { display: flex }
+  .nt-sheet-arrow { display: none }
+  .nt-side:not(.is-open) .nt-picked { display: block }
+  .nt-side:not(.is-open) .nt-picked-empty { display: flex }
+  .nt-help { position: absolute; top: 50%; right: 24px; transform: translateY(-50%) }
+  .nt-help-tip { top: 52px; right: 24px }
+  .nt-seat-body { flex-direction: row }
+  .nt-side { width: 420px; max-height: none; border-top: 0; border-left: 1px solid #eee }
+  .nt-side h2 { font-size: 18px }
+  .nt-picked { padding: 0 24px }
+  .nt-side-head { padding: 24px 24px 16px }
+  .nt-done { margin: 0 24px 24px }
+}
+
+/* ═══ 관람 구역 패널 — 놀 onestop CSS 수치 (1rem = 10px) ═══ */
+.gp { display: flex; flex-direction: column; height: 100%; min-height: 0; background: #fff }
+.gp-head { position: relative; flex-shrink: 0; padding: 24px 20px }
+.gp-head h3 { font-size: 24px; font-weight: 700; line-height: 1.3; color: #1b1c1f }
+.gp-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 12px }
+.gp-list { display: flex; flex-direction: column }
+.gp-item { display: flex; flex-direction: column; align-items: stretch; width: 100%; padding: 20px 16px; background: transparent; border: 1px solid transparent; border-radius: 12px; text-align: left }
+.gp-item.sel { border-color: #b2baff; box-shadow: 0 0 6px 0 rgba(0,0,0,.12) }
+.gp-item:active { background: #f2f3f7 }
+@media (hover: hover) and (pointer: fine) { .gp-item:hover { background: #f2f3f7 } }
+.gp-row { display: flex; align-items: center; width: 100% }
+.gp-row i { flex-shrink: 0; width: 14px; height: 14px; margin-right: 10px; border-radius: 50% }
+.gp-row b { flex: 1; min-width: 0; font-size: 18px; font-weight: 600; line-height: 22px; color: #6e6f73; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.gp-row em { flex-shrink: 0; font-style: normal; font-size: 18px; font-weight: 700; color: #6e6f73; text-align: right; font-variant-numeric: tabular-nums }
+.gp-note { display: flex; align-items: flex-start; gap: 2px; width: 100%; margin-top: 12px; padding-left: 24px }
+.gp-note svg { flex-shrink: 0; width: 20px; height: 20px; margin-top: 2px; color: #6e6f73 }
+.gp-note span { flex: 1; min-width: 0; word-break: keep-all; font-size: 16px; line-height: 24px; color: #6e6f73 }
+.gp-foot { display: flex; flex-shrink: 0; gap: 10px; padding: 24px; background: #fff; border-top: 1px solid #e9eaef; box-shadow: 0 0 8px 0 rgba(0,0,0,.1) }
+.gp-foot.flat { border-top-color: transparent; box-shadow: none }
+.gp-foot > button { flex: 1 }
+.ent { display: block; width: 100%; padding: 0 8px; background: #fff; border: 1px solid #ddd; border-radius: 16px; font-size: 20px; font-weight: 700; line-height: 58px; white-space: nowrap; color: #1b1c1f }
+.ent.primary { border-color: #4154ff; background: #4154ff; color: #fff }
+.ent:disabled { border-color: #ddd; background: #ddd; color: #fff; cursor: default }
+.gp-x { display: none; position: absolute; top: 50%; right: 12px; width: 40px; height: 40px; transform: translateY(-50%); align-items: center; justify-content: center; color: #999 }
+.gp-x svg { width: 16px; height: 16px }
+/* 자동배정 — 매수 선택 · 결과 */
+.as-head { position: relative; flex-shrink: 0; display: flex; align-items: center; padding: 12px }
+.as-back { flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; color: #1b1c1f }
+.as-back svg { width: 22px; height: 22px }
+.as-head h3 { display: flex; align-items: center; min-height: 50px; font-size: 20px; font-weight: 700; color: #1b1c1f; line-height: 1.3 }
+.as-body { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 20px }
+.ac-card { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 21px 23px; border: 1px solid #e9eaef; border-radius: 20px; box-shadow: 0 0 8px 0 rgba(0,0,0,.2) }
+.ac-info { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0 }
+.ac-name { display: flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 600; line-height: 22px; color: #6e6f73 }
+.ac-name i { flex-shrink: 0; width: 12px; height: 12px; border-radius: 50% }
+.ac-price { padding-bottom: 4px; font-size: 20px; font-weight: 700; line-height: 24px; color: #1b1c1f }
+.ac-step { display: flex; align-items: center; flex-shrink: 0; width: 116px; background: #f7f8fb; border-radius: 16px; overflow: hidden }
+.ac-step button { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 38px; min-height: 48px; color: #1b1c1f }
+.ac-step button:disabled { opacity: .3; cursor: default }
+.ac-step svg { width: 16px; height: 16px }
+.ac-step output { flex: 1; min-width: 0; text-align: center; font-size: 18px; font-weight: 700; color: #1b1c1f; font-variant-numeric: tabular-nums }
+.ar-card { display: flex; flex-direction: column; gap: 4px; padding: 16px 24px; background: #f7f8fb; border-radius: 20px }
+.ar-msg { padding: 12px 0; font-size: 18px; font-weight: 600; line-height: 22px; color: #1b1c1f }
+.ar-div { height: 1px; background: rgba(0,0,0,.05) }
+.ar-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0 }
+.ar-info { display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+.ar-info b { font-size: 18px; font-weight: 600; line-height: 22px; color: #1b1c1f }
+.ar-info span { font-size: 14px; line-height: 17px; color: #6e6f73 }
+.ar-item strong { flex-shrink: 0; font-size: 18px; font-weight: 700; line-height: 22px; color: #1b1c1f }
+/* 배정 중 — 화면 전체를 흰 화면으로 덮는다 */
+.au-load { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; background: #fff }
+.au-center { flex: 1; display: flex; align-items: center; justify-content: center }
+.au-content { display: flex; flex-direction: column; align-items: center; gap: 33px }
+.au-text { font-size: 18px; font-weight: 700; line-height: 27px; color: #6e6f73; text-align: center; white-space: pre-line }
+.au-bottom { flex-shrink: 0; padding: 0 20px calc(34px + env(safe-area-inset-bottom, 0px)); text-align: center; visibility: hidden; opacity: 0; transition: opacity .3s ease, visibility .3s ease }
+.au-bottom.on { visibility: visible; opacity: 1 }
+.au-desc { font-size: 13px; line-height: 16px; color: #6e6f73 }
+/* 팝업 — 놀 다이얼로그 (왼쪽 정렬) */
+#pkt-alert-overlay { background: rgba(0,0,0,.4); backdrop-filter: none; -webkit-backdrop-filter: none }
+#pkt-alert-box { max-width: 360px; padding: 24px 20px 20px; border-radius: 24px; box-shadow: 0 8px 28px rgba(0,0,0,.16) }
+#pkt-alert-title { padding: 0; font-size: 19px; font-weight: 700; line-height: 1.45; color: #1b1c1f; text-align: left; letter-spacing: 0 }
+#pkt-alert-msg { padding: 0; margin-top: 10px; font-size: 14px; line-height: 1.5; color: #6e6f73; text-align: left }
+#pkt-alert-footer { margin-top: 20px; gap: 8px }
+.pkt-alert-btn { height: 42px; padding: 0 10px; border-radius: 12px; font-size: 14px; font-weight: 700; white-space: nowrap }
+#pkt-alert-cancel { background: #fff; color: #1b1c1f; box-shadow: inset 0 0 0 1px #ddd }
+#pkt-alert-confirm { background: #4154ff; color: #fff; box-shadow: none }
+/* 지도 왼쪽 아래 — 등급 별 가격 */
+.nt-chips { left: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)) }
+.nt-price-chip { display: flex; align-items: center; padding: 12px 12px 12px 16px; background: #fff; border-radius: 20px; box-shadow: 0 0 8px 0 rgba(0,0,0,.1); font-size: 14px; font-weight: 700; line-height: 16px; color: #666 }
+.nt-price-chip span { margin-left: 2px; color: #999; font-weight: 400 }
+.nt-price-tip { position: absolute; left: 12px; bottom: 66px; z-index: 4; width: 180px; background: #fff; border-radius: 12px; box-shadow: 0 0 8px 0 rgba(0,0,0,.16) }
+.nt-price-tip ul { max-height: 290px; padding: 20px 16px; overflow-y: auto }
+.nt-price-tip li { display: flex; align-items: center; gap: 0 10px; padding: 12px 0; border-top: 1px solid #f3f3f3 }
+.nt-price-tip li:first-child { padding-top: 0; border-top: 0 }
+.nt-price-tip li:last-child { padding-bottom: 0 }
+.nt-price-tip li i { flex-shrink: 0; width: 12px; height: 12px; border-radius: 50% }
+.nt-price-tip li span { display: flex; flex-direction: column; font-size: 12px; line-height: 12px; color: #1b1c1f }
+.nt-price-tip li b { margin-top: 2px; font-size: 13px; line-height: 13px; font-weight: 700 }
+.nt-price-tip .pt-x { position: absolute; top: 0; right: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #999 }
+.nt-price-tip .pt-x svg { width: 14px; height: 14px }
+/* 모바일 — 아래에서 올라오는 시트 */
+.nt-grade-layer { left: 0; right: 0; bottom: 0; z-index: 5; width: auto; min-width: 0; max-height: 82%; padding: 0; border-radius: 30px 30px 0 0; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 10px 0 rgba(0,0,0,.3) }
+.nt-grade-layer > .gp { flex: 1; height: auto; min-height: 0 }
+.nt-grade-layer .gp { padding-top: 30px }
+.nt-grade-layer .gp-x { display: block; position: absolute; top: 0; left: 0; right: 0; width: 100%; height: 30px; transform: none }
+.nt-grade-layer .gp-x::after { content: ""; display: block; width: 48px; height: 4px; margin: 13px auto 0; border-radius: 2px; background: #dcdde2 }
+.nt-grade-layer .gp-head, .nt-grade-layer .as-head { position: static }
+.nt-grade-layer .gp-item.sel { border: 2px solid #1a5fd6; box-shadow: none; padding: 12.5px 15px }
+.nt-grade-layer .ent:not(.primary) { background: #f2f3f7; border-color: #e1e3e8 }
+.nt-grade-layer .as-back { display: none }
+.nt-grade-layer .as-head { padding: 10px 20px 14px }
+.nt-grade-layer .as-head h3 { min-height: 0; font-size: 16px; font-weight: 600; line-height: 19px }
+.nt-grade-layer .ac-price { display: none }
+.nt-grade-layer .gp-foot.flat { padding-top: 20px }
+.nt-grade-layer .gp-head { padding: 10px 20px 14px }
+.nt-grade-layer .gp-head h3 { font-size: 20px }
+.nt-grade-layer .gp-body { padding: 0 4px }
+.nt-grade-layer .gp-item { padding: 13.5px 16px }
+.nt-grade-layer .gp-row i { width: 12px; height: 12px; margin-right: 6px }
+.nt-grade-layer .gp-row b, .nt-grade-layer .gp-row em { font-size: 16px; line-height: 20px }
+.nt-grade-layer .gp-note { padding-left: 18px }
+.nt-grade-layer .gp-note svg { width: 18px; height: 18px; margin-top: 1px }
+.nt-grade-layer .gp-note span { font-size: 14px; line-height: 21px }
+.nt-grade-layer .gp-foot { padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)) }
+.nt-grade-layer .ent { font-size: 16px; line-height: 50px }
+.nt-grade-layer .as-body { padding: 4px 20px 12px }
+@media (max-width: 1024px) { .nt-seat-body.au-result .nt-side { display: none } }
+@media (min-width: 1025px) {
+  .nt-remain { flex: 1; min-height: 0; padding: 0; border-bottom: 0; flex-direction: column }
+  .nt-remain > .gp { width: 100% }
+  .nt-seat-body.has-picked .nt-remain { display: none }
+  .nt-seat-body.au-result .nt-remain { display: flex !important }
+  .nt-seat-body:not(.has-picked) .nt-side-head, .nt-seat-body:not(.has-picked) .nt-picked,
+  .nt-seat-body:not(.has-picked) .nt-picked-empty, .nt-seat-body:not(.has-picked) .nt-done,
+  .nt-seat-body.au-result .nt-side-head, .nt-seat-body.au-result .nt-picked,
+  .nt-seat-body.au-result .nt-picked-empty, .nt-seat-body.au-result .nt-done { display: none !important }
+  #gradeChip, .nt-grade-layer { display: none !important }
+  .au-bottom { padding-bottom: 24px }
+}
+@media (min-width: 1345px) { .nt-side { width: 480px } }
+/* 예매 안내 팝업 */
+#noticeDim { z-index: 12 }
+.nt-notice-pop { position: fixed; z-index: 13; top: 50%; left: 50%; width: min(420px, calc(100vw - 40px)); max-height: calc(100dvh - 40px); overflow-y: auto; transform: translate(-50%, -50%); padding: 24px 20px 20px; border-radius: 20px; background: #fff }
+.np-head { display: flex; align-items: center; justify-content: space-between; gap: 12px }
+.np-head h3 { font-size: 20px; font-weight: 700; color: #1b1c1f }
+.np-x { flex-shrink: 0; width: 32px; height: 32px; margin-right: -6px; display: flex; align-items: center; justify-content: center; color: #1b1c1f }
+.np-x svg { width: 18px; height: 18px }
+.np-body { margin-top: 18px; display: flex; flex-direction: column; gap: 22px; font-size: 15px; line-height: 1.55; color: #55565c; word-break: keep-all }
+.np-body .np-sub { margin-bottom: 8px; font-size: 16px; font-weight: 700; color: #3b3c40 }
+.np-ok { width: 100%; margin-top: 26px; height: 52px; border-radius: 16px; background: #4154ff; color: #fff; font-size: 16px; font-weight: 700 }
+/* 모바일 구역 시트 — 기본은 살짝, 펼치면 크게 */
+.zf-in { display: none }
+.nt-zoom-fit.is-shrink .zf-out { display: none }
+.nt-zoom-fit.is-shrink .zf-in { display: block }
+@media (max-width: 1024px) {
+  #gradeChip { display: none }
+  .nt-grade-layer { max-height: none; transition: height .25s ease }
+  .nt-grade-layer.is-peek { height: 168px }
+  .nt-grade-layer.is-open { height: 78% }
+  .nt-grade-layer.is-peek .gp-body { overflow: hidden }
+  .nt-grade-layer.is-peek .gp-foot { display: none }
+  .nt-plan.sheet-on .nt-zoom-fit { bottom: 180px }
+  .nt-plan.sheet-on .nt-chips { bottom: 180px }
+  .nt-plan.sheet-on .nt-price-tip { bottom: 234px }
+  .nt-grade-layer .gp-head, .nt-grade-layer .as-head, .nt-grade-layer .gp-x { touch-action: none }
+}
+</style>
+</head>
+<body>
+
+<!-- 0) 예매 대기 화면 -->
+<section class="nt-screen is-active" id="screen-intro">
+  <button type="button" class="in-quick" id="quickBtn">보안문자부터 연습 ›</button>
+  <h1 class="in-title">예매 준비가 완료됐어요</h1>
+  <div class="in-poster" aria-hidden="true">
+    <div class="p-top" id="pTop"></div>
+    <div class="p-field"></div>
+    <div class="p-vs" id="pVs"></div>
+    <div class="p-meta" id="pMeta"></div>
+  </div>
+  <p class="in-name js-gv"></p>
+  <button type="button" class="in-btn is-locked" id="bookBtn">남은시간 00:05</button>
+  <p class="in-note">플로우 테스트판 · 대기열 없이 바로 예매 안내 → 보안문자 → 좌석 선택으로 들어가요</p>
+  <button type="button" class="in-rule" data-rule>연습 규칙 보기 ›</button>
+  <div class="in-dim" id="startDim">
+    <div class="in-card" role="dialog" aria-modal="true" aria-labelledby="cfTitle">
+      <div class="sh-handle"></div>
+      <h2 class="sh-title" id="cfTitle">연습 설정</h2>
+      <p class="sh-desc">고르고 시작하면 카운트다운이 시작돼요</p>
+      <button type="button" class="sh-link" data-rule>어떻게 만들었는지 보기 ›</button>
+      <div class="cf-groups">
+        <fieldset class="cf-group" id="stadSeg" hidden><legend>구장</legend><div class="cf-opts">
+          <label class="cf-radio"><input type="radio" name="cfStad" value="jamsil"><span>잠실야구장</span></label>
+          <label class="cf-radio"><input type="radio" name="cfStad" value="gwangju"><span>광주 챔피언스필드</span></label>
+        </div></fieldset>
+        <fieldset class="cf-group" id="openSeg"><legend>카운트다운</legend><div class="cf-opts">
+          <label class="cf-radio"><input type="radio" name="cfOpen" value="3"><span>3초</span></label>
+          <label class="cf-radio"><input type="radio" name="cfOpen" value="5"><span>5초</span></label>
+        </div></fieldset>
+        <fieldset class="cf-group" id="crowdSeg"><legend>대기열 규모</legend><div class="cf-opts">
+          <label class="cf-radio"><input type="radio" name="cfCrowd" value="80000"><span>정규시즌 8만</span></label>
+          <label class="cf-radio"><input type="radio" name="cfCrowd" value="125000"><span>와일드카드 12.5만</span></label>
+          <label class="cf-radio"><input type="radio" name="cfCrowd" value="180000"><span>준PO 18만</span></label>
+          <label class="cf-radio"><input type="radio" name="cfCrowd" value="250000"><span>PO 25만</span></label>
+          <label class="cf-radio"><input type="radio" name="cfCrowd" value="500000"><span>KS 50만</span></label>
+        </div></fieldset>
+        <fieldset class="cf-group" id="speedSeg"><legend>대기 진행 속도</legend><div class="cf-opts">
+          <label class="cf-radio"><input type="radio" name="cfSpeed" value="1"><span>실제 속도</span></label>
+          <label class="cf-radio"><input type="radio" name="cfSpeed" value="10"><span>10배 빠르게</span></label>
+        </div></fieldset>
+        <fieldset class="cf-group" id="overloadSeg"><legend>접속자 몰림</legend><div class="cf-opts">
+          <label class="cf-radio"><input type="radio" name="cfOverload" value="1"><span>켜기</span></label>
+          <label class="cf-radio"><input type="radio" name="cfOverload" value="0"><span>끄기</span></label>
+        </div></fieldset>
+        <fieldset class="cf-group" id="wantSeg"><legend>희망 매수</legend><div class="cf-opts">
+          <label class="cf-radio"><input type="radio" name="cfWant" value="1"><span>1매</span></label>
+          <label class="cf-radio"><input type="radio" name="cfWant" value="2"><span>2매</span></label>
+          <label class="cf-radio"><input type="radio" name="cfWant" value="3"><span>3매</span></label>
+          <label class="cf-radio"><input type="radio" name="cfWant" value="4"><span>4매</span></label>
+        </div></fieldset>
+      </div>
+      <p class="in-rec" id="recLine"></p>
+      <button type="button" class="in-start" id="startBtn">연습 시작</button>
+      <button type="button" class="in-cancel" id="cancelBtn">닫기</button>
+    </div>
+  </div>
+  <div class="in-dim" id="readyDim" hidden>
+    <div class="rd-card" role="dialog" aria-modal="true" aria-labelledby="rdTitle">
+      <p class="rd-title" id="rdTitle">준비해주세요</p>
+      <p class="rd-sub">카운트다운과 대기열은 건너뛰고<br>3초 뒤 바로 보안문자가 떠요.</p>
+      <b class="rd-num" id="readyNum">3</b>
+      <p class="rd-rank" id="readyRank"></p>
+    </div>
+  </div>
+  <div class="in-dim" id="ruleDim" hidden>
+    <div class="in-card rule-card" role="dialog" aria-modal="true" aria-labelledby="ruleTitle">
+      <div class="sh-handle"></div>
+      <h2 class="sh-title" id="ruleTitle">연습 규칙</h2>
+      <p class="sh-desc">이 연습이 어떤 기준으로 움직이는지 정리했어요. 수치는 연습용 가정이라 실제 예매와 다를 수 있어요.</p>
+
+      <section class="rl-sec"><h3><i>1</i>진행 순서</h3>
+        <div class="rl-flow"><span>카운트다운</span><span>예매하기</span><span>접속 중</span><span>대기열</span><span>보안문자</span><span>좌석 선택</span><span>예매확인</span><span>결과</span></div>
+      </section>
+
+      <section class="rl-sec"><h3><i>2</i>예매하기 버튼</h3><ul>
+        <li>남은시간 <b>00:00이 1초 표시된 뒤</b> 버튼이 켜져요.</li>
+        <li>켜지기 전 클릭은 반영되지 않고, 결과에 '오픈 전 연타'로만 남아요.</li>
+        <li>반응속도는 버튼이 켜진 순간부터 첫 클릭까지예요. <b>150ms 이하 빠름 · 300ms 이하 보통 · 그 이상 늦음</b></li>
+      </ul></section>
+
+      <section class="rl-sec"><h3><i>3</i>접속자 몰림</h3><ul>
+        <li>켜면 클릭 후 화면이 바로 넘어가지 않고 멈춰 있어요. 보통 <b>1.0초(정규) ~ 1.8초(KS)</b>, 드물게 최대 6초.</li>
+        <li>기다리는 중 다시 누르면 앞 요청은 취소되고, <b>마지막으로 누른 시각 기준</b>으로 순번이 다시 정해져요.</li>
+        <li>0.2~1% 확률로 접속 오류가 나요. '다시 시도'를 누른 시각 기준으로 순번이 다시 정해져요.</li>
+      </ul></section>
+
+      <section class="rl-sec"><h3><i>4</i>대기 순번</h3><ul>
+        <li>오픈 후 내 요청이 도착한 시각으로 줄을 세워요. 다른 접속자는 이렇게 가정했어요.</li>
+      </ul>
+        <div class="rl-wrap"><table class="rl-table">
+          <tr><th>유형</th><th>누르는 시점</th><th>비율</th></tr>
+          <tr><td>박자 맞춰 누름</td><td>오픈 후 약 0.1초</td><td>25%(정규) ~ 45%(KS)</td></tr>
+          <tr><td>보고 누름</td><td>약 0.3초 전후</td><td>40~45%</td></tr>
+          <tr><td>늦게 들어옴</td><td>0.6초 이후</td><td>나머지</td></tr>
+        </table></div>
+        <ul style="margin-top:8px"><li>입장 속도는 초당 400명이에요. '10배 빠르게'면 초당 4,000명이에요.</li></ul>
+      </section>
+
+      <section class="rl-sec"><h3><i>5</i>좌석이 팔리는 방식</h3><ul>
+        <li>잠실 23,750석 중 <b>일반 예매분은 약 76%</b>. 나머지(선예매·구단 배정분)는 처음부터 팔린 상태예요.</li><li>좌석도 왼쪽 위에 <b>지금까지 입장한 인원</b>과 남은 좌석이 실시간으로 나와요.</li>
+        <li>오픈 순간부터 팔리고, 한 사람이 같은 열의 붙은 자리를 묶어서 사요. <b>4매 70% · 2매 20% · 3매 7% · 1매 3%</b></li>
+        <li>먼저 팔리는 순서: <b>① 중앙·테이블·오렌지·익사이팅·레드·블루 ② 오렌지 뒤 네이비(304~309, 326~331) ③ 그 외 네이비 ④ 외야</b></li>
+        <li>그룹 순서대로 팔리고(4%만 자리를 가리지 않음), 같은 그룹 안에서는 <b>통로 쪽 자리부터</b> 팔려요.</li><li>선예매·구단 배정분(24%)도 대부분 좋은 자리에 잡혀 있어요. 그래서 <b>약 1,300~2,000번째 입장자</b>쯤 ①그룹은 매진돼요.</li><li>네이비는 오렌지 뒤쪽(304~309, 326~331)과 그 외가 같이 팔리지만 오렌지 뒤쪽이 더 빨라요. 오렌지 뒤쪽은 <b>약 4,000~4,500번째</b>에 매진돼요.</li><li>오렌지·레드·블루는 1·3루마다 몇 석씩 늦게까지 남아요. 약 2,000번째에도 10석 안팎이 보이고 약 3,500번째쯤 다 팔려요.</li>
+        <li>그래서 4연석 → 3연석 → 2연석 → 단석 순으로 사라져요.</li>
+      </ul>
+        <div class="rl-wrap"><table class="rl-table">
+          <tr><th>내 앞 입장자</th><th>남는 자리</th></tr>
+          <tr><td>약 6,000번째</td><td>4연석 거의 없음</td></tr>
+          <tr><td>약 6,300번째</td><td>3연석 거의 없음</td></tr>
+          <tr><td>약 6,800번째</td><td>2연석 마감 · 이후 흩어진 단석만</td></tr>
+          <tr><td>약 8,900번째</td><td>완전 매진</td></tr>
+        </table></div>
+        <ul style="margin-top:8px"><li>기준은 실제 사례 하나예요. 와일드카드 예매 때 7000번대에서 2연석을 못 잡았어요.</li><li>내가 입장한 뒤에도 초당 150석(단석만 남으면 40석)씩 계속 팔려요.</li></ul>
+      </section>
+
+      <section class="rl-sec"><h3><i>+</i>보안문자부터 연습 · 자동배정</h3><ul>
+        <li>예매 대기 화면 오른쪽 위 <b>'보안문자부터 연습'</b>을 누르면 3초 뒤 바로 보안문자가 떠요. <b>5,000번 이하 무작위 순번</b>으로 입장한 상태에서 시작해요. 순번이 뒤일수록 좌석이 더 줄어 있어요.</li>
+        <li>좌석 화면에서 <b>관람 구역(등급)</b>을 고르면 <b>'자동 배정받기'</b>와 <b>'직접 좌석 선택하기'</b>가 나와요. 자동 배정은 매수를 고르면 그 구역의 붙은 자리를 무작위 순서로 하나씩 요청해요. 그 사이 다른 사람이 먼저 잡으면 다음 후보로 넘어가고, 3번 안에 못 잡으면 '계속 시도' 또는 '다른 구역 선택'을 고를 수 있어요.</li>
+        <li>2연석이 끝난 뒤(약 6,800번째) 남는 흩어진 단석은 대부분 외야에 있어요. 네이비는 약 7,000번째쯤 다 팔려요.</li>
+      </ul></section>
+
+      <section class="rl-sec"><h3><i>+</i>구장</h3><ul>
+        <li>연습 설정에서 <b>잠실야구장</b>과 <b>광주 챔피언스필드</b>를 고를 수 있어요.</li>
+        <li>챔피언스필드는 20,500석 기준이라 연석·매진 시점이 잠실보다 조금 빨라요(2연석 약 5,900번째, 완전 매진 약 7,700번째).</li>
+        <li>챔피언스필드의 등급 이름·가격·판매 순서는 연습용 임시값이에요.</li>
+      </ul></section>
+
+      <section class="rl-sec"><h3><i>6</i>보안문자</h3><ul>
+        <li>영문 6자예요. 소문자로 쳐도 대문자로 바뀌고, 6자가 되어야 '입력완료'가 켜져요.</li>
+        <li>틀려도 문자가 바뀌지 않아요. 입력하는 동안에도 좌석은 계속 팔려요.</li>
+      </ul></section>
+
+      <section class="rl-sec"><h3><i>7</i>좌석 선택</h3><ul>
+        <li>구역을 누르면 확대돼요. 희망 매수만큼 고를 수 있고, 떨어진 자리도 괜찮아요.</li>
+        <li>내가 고른 자리는 다른 사람이 가져가지 않아요.</li>
+        <li>화면은 0.5초마다 갱신돼요. 그 사이 팔린 자리를 누르면 '이미 선점된 좌석'이 떠요.</li>
+        <li>제한 시간은 10분이에요.</li>
+      </ul></section>
+
+      <section class="rl-sec"><h3><i>8</i>예매확인</h3><ul>
+        <li>누르면 1.4초 동안 처리된 뒤 예매가 완료돼요. 여러 번 눌러도 처음 한 번만 처리돼요.</li>
+      </ul></section>
+
+      <section class="rl-sec"><h3><i>9</i>결과 등급</h3>
+        <div class="rl-wrap"><table class="rl-table">
+          <tr><th>오픈 → 예매확인</th><th>등급</th></tr>
+          <tr><td>7초 이하</td><td>S+</td></tr><tr><td>10초 이하</td><td>S</td></tr><tr><td>14초 이하</td><td>A</td></tr><tr><td>20초 이하</td><td>B</td></tr><tr><td>그 이상</td><td>C</td></tr>
+        </table></div>
+      </section>
+
+      <p class="rl-foot">기록은 이 브라우저에만 저장돼요.</p>
+      <button type="button" class="rl-close" id="ruleClose">닫기</button>
+    </div>
+  </div>
+</section>
+
+<!-- 1) 대기 순서 확인 중 -->
+<section class="nt-screen" id="screen-loading">
+  <div class="nt-loading">
+    <div class="nt-spinner" id="loadSpin"></div>
+    <h2><span id="loadL1">대기 순서를 확인 중이에요.</span><strong id="loadL2">잠시만 기다려 주세요.</strong></h2>
+    <button type="button" class="nt-retry" id="retryBtn" hidden>다시 시도</button>
+  </div>
+</section>
+
+<!-- 2) 대기열 -->
+<section class="nt-screen" id="screen-queue">
+  <div class="nt-wait" id="waitRoot">
+    <div class="nt-wait-content">
+      <div class="nt-wait-title">
+        <h2><span id="waitLine1">접속 인원이 많아 대기 중입니다.</span><strong id="waitLine2">조금만 기다려주세요.</strong></h2>
+        <p class="nt-goods js-gv"></p>
+      </div>
+      <div class="nt-status">
+        <div class="nt-status-main">
+          <div class="nt-status-text"><h3>나의 대기순서</h3><strong id="queueRank">0</strong></div>
+          <div class="nt-bar" id="queueBar">
+            <div class="nt-bar-active" id="queueFill"></div>
+            <span class="nt-ticket"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"><path d="M2 6.5A1.5 1.5 0 0 1 3.5 5h13A1.5 1.5 0 0 1 18 6.5v1a2.5 2.5 0 0 0 0 5v1a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 2 13.5v-1a2.5 2.5 0 0 0 0-5v-1Z"/><path d="M11.5 5v10" stroke-dasharray="1.6 1.6"/></svg></span>
+          </div>
+        </div>
+        <div class="nt-status-sub">
+          <div class="nt-status-row"><h4>현재 대기인원</h4><span id="queueTotal">0명</span></div>
+          <div class="nt-status-row"><h4>예매율</h4><span id="bookingRate">0%</span></div>
+        </div>
+      </div>
+      <ul class="nt-notice">
+        <li>새로고침 하거나 재접속 하시면 대기순서가 초기화 되어 대기시간이 더 길어집니다.</li>
+        <li>예매 화면 이동 후 10분 이내에 좌석 선택을 완료하지 않으면 예매가 자동으로 종료됩니다.</li>
+        <li>페이지를 나가면 대기 순번이 초기화됩니다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 3) 좌석 선택 -->
+<section class="nt-screen" id="screen-seat">
+  <header class="nt-hdr">
+    <span class="nt-logo">티켓팅 연습</span>
+    <nav class="nt-hdr-menu"><button type="button">마이페이지</button><span class="nt-hdr-div"></span><button type="button">예매확인/취소</button></nav>
+  </header>
+  <div class="nt-sub">
+    <h2 class="nt-mo-title">좌석 선택</h2>
+    <span class="nt-sub-title js-game"></span>
+    <span class="nt-sub-div"></span>
+    <span class="nt-sub-date">2026.10.20(화) 6:30 PM</span>
+    <button type="button" class="nt-sub-chip">일정변경</button>
+    <p class="nt-timer" id="timerWrap"><span class="nt-timer-label">좌석 선택 시간</span> <strong id="seatTimer"></strong></p>
+    <button type="button" class="nt-help" id="timerHelp" aria-label="좌석 선택 시간 안내">?</button>
+    <button type="button" class="nt-close" id="closeBtn" aria-label="닫기"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
+    <div class="nt-help-tip" id="timerTip" hidden><strong>좌석 선택 시간</strong><p>제한 시간이 지나면 처음부터 다시 예매해야 돼요. 시간 내 선택 및 입력을 완료해 주세요.</p></div>
+  </div>
+  <div class="nt-mo-card">
+    <p class="nt-mo-card-title js-game"></p>
+    <div class="nt-mo-card-row"><span class="nt-mo-card-date">2026.10.20(화) 6:30 PM</span><button type="button" class="nt-mo-card-chip">일정변경 ›</button></div>
+  </div>
+  <div class="nt-seat-body">
+    <div class="nt-plan" id="planViewport">
+      <div class="nt-map" id="planMap">
+        <svg class="nt-layer" viewBox="0 0 840 850" id="baseLayer" aria-hidden="true"></svg>
+        <svg class="nt-layer" viewBox="0 0 840 850" id="seatLayer"></svg>
+        <svg class="nt-layer" viewBox="0 0 840 850" id="blockLayer"></svg>
+      </div>
+      <div class="nt-live" id="liveBar"></div>
+      <div class="nt-hint" id="planHint" hidden></div>
+      <div class="nt-chips"><button type="button" class="nt-price-chip" id="priceChip">등급 별 가격 <span aria-hidden="true">ⓘ</span></button><button type="button" class="nt-auto-chip" id="gradeChip">관람 구역 선택</button></div>
+      <div class="nt-price-tip" id="priceTip" hidden></div>
+      <div class="nt-grade-layer" id="gradeLayer" hidden></div>
+      <div class="nt-minimap" id="miniMap"><svg class="nt-mini-plan" viewBox="0 0 840 850" id="miniLayer" preserveAspectRatio="none"></svg><div class="nt-mini-view" id="miniView"></div></div>
+      <div class="nt-zoom"><button type="button" id="zoomIn" aria-label="확대">+</button><button type="button" id="zoomOut" aria-label="축소">−</button></div>
+      <button type="button" class="nt-zoom-fit" id="zoomFit" aria-label="전체보기"><svg class="zf-out" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/></svg><svg class="zf-in" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v5H3M12 3v5h5M12 17v-5h5M8 17v-5H3"/></svg></button>
+    </div>
+    <aside class="nt-side">
+      <div class="nt-remain" id="remainSide"></div>
+      <button type="button" class="nt-sheet-arrow" id="sheetArrow" aria-label="선택 좌석 펼치기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></button>
+      <div class="nt-side-head"><h2>선택좌석<em id="pickedNum"></em></h2><button type="button" class="nt-clear" id="clearBtn" hidden>전체 삭제</button></div>
+      <ul class="nt-picked" id="pickedList"></ul>
+      <p class="nt-picked-empty" id="pickedEmpty">좌석을 선택해주세요.</p>
+      <button type="button" class="nt-done" id="doneBtn" disabled>선택 완료</button>
+    </aside>
+  </div>
+</section>
+
+<!-- 예매 안내 — 보안문자 전에 뜬다 -->
+<div class="nt-dim" id="noticeDim" hidden></div>
+<div class="nt-notice-pop" id="noticeBox" role="dialog" aria-modal="true" aria-labelledby="noticeTitle" hidden>
+  <div class="np-head"><h3 id="noticeTitle">예매 안내</h3></div>
+  <div class="np-body">
+    <p class="np-sub">※ 시야방해석 안내</p>
+    <p>경기장 구조로 인해 시야 방해가 있을 수 있으며, 이미지 내 별도 표시된 좌석은 시야방해석으로 관람하시기에 불편이 있을 수 있습니다.</p>
+    <p>취소 기간 이후, 시야 방해로 인한 취소는 불가능 하며 세부사항은 예매안내 유의사항을 참고하여 주시기 바랍니다.</p>
+  </div>
+  <button type="button" class="np-ok" id="noticeOk">확인하고 예매하기</button>
+</div>
+
+<!-- 보안문자 -->
+<div class="nt-dim" id="capDim" hidden></div>
+<form class="nt-cap" id="capBox" autocomplete="off" hidden>
+  <h3>화면의 문자를 입력해주세요</h3>
+  <p class="nt-cap-sub">문자 입력 인증 후 좌석을 선택할 수 있습니다</p>
+  <div class="nt-cap-box">
+    <button type="button" class="nt-cap-round l" id="capSound" aria-label="음성으로 듣기"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8v4h3l4 3V5L6 8H3Z"/><path d="M13 7.5a3.5 3.5 0 0 1 0 5M15.2 5.5a6.5 6.5 0 0 1 0 9"/></svg></button>
+    <canvas id="capCanvas" width="420" height="140"></canvas>
+    <button type="button" class="nt-cap-round r" id="capRefresh" aria-label="새로고침"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 10a6 6 0 1 1-1.8-4.3"/><path d="M16 3.5v3h-3"/></svg></button>
+  </div>
+  <input class="nt-cap-input" id="capInput" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="6" placeholder="화면의 문자를 입력해주세요 (대소문자 구분없음)" aria-label="보안문자">
+  <p class="nt-cap-err" id="capErr"></p>
+  <button type="submit" class="nt-done" id="capDone" disabled>입력완료</button>
+</form>
+
+<!-- 예매확인 -->
+<div class="nt-cap nt-cf" id="cfBox" hidden>
+  <h3>예매 정보를 확인해주세요</h3>
+  <p class="nt-cap-sub">예매확인을 누르면 예매가 완료됩니다</p>
+  <dl class="nt-cf-list" id="cfList"></dl>
+  <p class="nt-cf-total">총 결제금액<b id="cfTotal"></b></p>
+  <div class="nt-cf-btns">
+    <button type="button" class="nt-done nt-cf-prev" id="cfPrev">이전</button>
+    <button type="button" class="nt-done" id="cfBtn">예매확인</button>
+  </div>
+</div>
+
+<!-- 알림 -->
+<div id="pkt-alert-overlay">
+  <div id="pkt-alert-box" role="alertdialog" aria-modal="true" aria-labelledby="pkt-alert-title">
+    <p id="pkt-alert-title"></p>
+    <p id="pkt-alert-msg"></p>
+    <div id="pkt-alert-footer"><button type="button" class="pkt-alert-btn" id="pkt-alert-cancel">취소</button><button type="button" class="pkt-alert-btn" id="pkt-alert-confirm">확인</button></div>
+  </div>
+</div>
+
+<!-- 자동배정 — 배정 중 -->
+<div class="au-load" id="auLoad" hidden>
+  <div class="au-center"><div class="au-content"><div class="nt-spinner"></div><p class="au-text">좌석을 배정 중이에요.
+잠시 기다려 주세요.</p></div></div>
+  <div class="au-bottom" id="auBottom"><p class="au-desc">예매 상황에 따라 최대 2분까지 걸릴 수 있어요.</p></div>
+</div>
+
+<!-- 결과 -->
+<div id="pkt-result-overlay"><div class="pkt-modal-card" id="resultCard"></div></div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const now = () => performance.now();
+const won = n => n.toLocaleString('ko-KR') + '원';
+const n = v => Math.round(v).toLocaleString('ko-KR');
+const pad2 = v => String(v).padStart(2, '0');
+const show = id => document.querySelectorAll('.nt-screen').forEach(s => s.classList.toggle('is-active', s.id === id));
+
+/* ═══ 연습 설정 — 기본값은 참고 페이지와 같다 ═══ */
+const FLOW_TEST = true;   // 대기열·카운트다운 없이 전체 흐름만 확인하는 판
+const DEFAULTS = { stadium: 'jamsil', open: 5, crowd: 180000, speed: 10, overload: 1, want: 2 };
+const CFG = { ...DEFAULTS };
+try { Object.assign(CFG, JSON.parse(localStorage.getItem('jamsil_nt_cfg_v1') || '{}')); } catch (e) {}
+if (![3, 5].includes(CFG.open)) CFG.open = 5;
+CFG.stadium = 'jamsil';   // 챔피언스필드는 보류 — 잠실만
+const SEGS = { stadSeg: 'stadium', openSeg: 'open', crowdSeg: 'crowd', speedSeg: 'speed', overloadSeg: 'overload', wantSeg: 'want' };
+let phaseIntro = 'idle';
+function paintCfg() {
+  for (const [id, key] of Object.entries(SEGS)) {
+    document.querySelectorAll(`#${id} input`).forEach(r => { r.checked = r.value === String(CFG[key]); });
+  }
+  if (phaseIntro === 'idle') $('bookBtn').textContent = `남은시간 00:${pad2(CFG.open)}`;
+}
+for (const [id, key] of Object.entries(SEGS)) {
+  $(id).addEventListener('change', e => {
+    if (phaseIntro !== 'idle') { paintCfg(); return; }
+    CFG[key] = key === 'stadium' ? e.target.value : Number(e.target.value);
+    try { localStorage.setItem('jamsil_nt_cfg_v1', JSON.stringify(CFG)); } catch (err) {}
+    paintCfg();
+    if (key === 'stadium') { applyModel(CFG.stadium); useStadium(CFG.stadium); buildPlan(); }
+  });
+}
+
+const SEAT_LIMIT_MS = 10 * 60 * 1000;
+const LOADING_MS = 800;
+const ALMOST_PERCENT = 90;
+const FEE = 2000;
+
+/* ═══ 대기열 · 좌석 소진 모델 (연습용 가정) ═══
+   - 일반 예매로 풀리는 좌석은 전체의 약 76%, 입장 속도 초당 400명 (참고 페이지)
+   - 실제 결과 보정: 와일드카드 때 7000번대는 2연석을 못 잡았다
+     → 2연석은 약 6,800번째 입장자에서 끝나고, 단석까지 약 8,900번째에서 매진
+     → 좌석도에서는 4연석이 약 6,000번째, 3연석이 약 6,300번째쯤 먼저 사라진다
+   - 연석이 남은 동안 입장자 1명당 약 2.3석, 단석만 남은 뒤엔 약 1.1석씩 팔린다 */
+const PUBLIC = 0.757, RATE = 400, SINGLE_PER_ENTRY = 1.1;
+const STADIUM_SEATS_BY = { jamsil: 23750, gwangju: 20500 };   // 챔피언스필드는 잠실 기준값을 좌석 수 비율로 줄였다
+let STADIUM_SEATS, SEATS, PAIR_CUT_AT, SOLDOUT_AT, SCATTER, SEATS_PER_ENTRY;
+function applyModel(key) {
+  STADIUM_SEATS = STADIUM_SEATS_BY[key] || 23750;
+  const k = STADIUM_SEATS / 23750;
+  SEATS = Math.round(STADIUM_SEATS * PUBLIC);
+  PAIR_CUT_AT = Math.round(6800 * k); SOLDOUT_AT = Math.round(8900 * k);
+  SCATTER = (SOLDOUT_AT - PAIR_CUT_AT) * SINGLE_PER_ENTRY / SEATS;   // 단석만 남는 시점의 남은 비율 (약 12.8%)
+  SEATS_PER_ENTRY = SEATS * (1 - SCATTER) / PAIR_CUT_AT;
+}
+applyModel(CFG.stadium);
+const CAP_DRAIN = 150, CAP_DRAIN_SINGLE = 40;   // 입장 뒤에도 앞사람들이 결제를 마치며 초당 빠지는 좌석
+const pairCut = () => SEATS * (1 - SCATTER) / SEATS_PER_ENTRY;
+function seatsAfter(entered) {
+  const e1 = pairCut();
+  return entered <= e1 ? SEATS - entered * SEATS_PER_ENTRY : SEATS * SCATTER - (entered - e1) * SINGLE_PER_ENTRY;
+}
+/* 경기 등급별 접속자 성향 — beat: 박자 맞춰 누르는 비율, see: 보고 누르는 비율, med/err: 몰림 응답 대기·오류 확률 */
+/* med: 몰림 응답 대기 가운데값(초). 보통 1~2초, 대기열 규모가 클수록 길다 */
+const level = () => CFG.crowd >= 400000 ? { key: 'ks', beat: .45, see: .40, med: 1.8, err: .01 }
+  : CFG.crowd >= 200000 ? { key: 'po', beat: .35, see: .45, med: 1.5, err: .005 }
+  : CFG.crowd >= 150000 ? { key: 'sp', beat: .33, see: .45, med: 1.35, err: .004 }
+  : CFG.crowd >= 100000 ? { key: 'wc', beat: .32, see: .45, med: 1.2, err: .004 }
+  : { key: 'rs', beat: .25, see: .45, med: 1.0, err: .002 };
+const randn = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+// 가운데값 기준 ±40% 안팎에서 흔들리고, 드물게 더 길어진다 (최대 6초)
+const sampleLat = lv => Math.min(6, Math.exp(Math.log(lv.med) + 0.35 * randn()));
+const SAMPLE = 40000, crowdCache = {};
+function crowdFor() {
+  const lv = level(), key = lv.key + CFG.overload;
+  if (crowdCache[key]) return crowdCache[key];
+  const arr = new Float64Array(SAMPLE);
+  for (let i = 0; i < SAMPLE; i++) {
+    const r = Math.random(); let t;
+    if (r < lv.beat) t = 0.10 + 0.055 * randn();
+    else if (r < lv.beat + lv.see) t = Math.exp(Math.log(0.30) + 0.35 * randn());
+    else t = 0.6 + -Math.log(Math.random()) * 4;
+    t = Math.max(0.02, t + 0.01 + Math.abs(0.02 * randn()));
+    if (CFG.overload && Math.random() < lv.err) t += sampleLat(lv) + 2 + -Math.log(Math.random()) * 1.5;
+    arr[i] = t;
+  }
+  arr.sort();
+  return (crowdCache[key] = arr);
+}
+/* 오픈 후 서버 도착 시각(초) → 내 대기순서 */
+function rankFor(sec) {
+  const crowd = crowdFor();
+  let lo = 0, hi = SAMPLE;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (crowd[m] < sec) lo = m + 1; else hi = m; }
+  return Math.max(1, Math.round(lo / SAMPLE * CFG.crowd) + Math.floor(Math.random() * 40));
+}
+
+/* ═══ 기록 (이 브라우저에만 저장) ═══ */
+const REC_KEY = 'jamsil_nt_records_v1';
+function loadRec() { try { const r = JSON.parse(localStorage.getItem(REC_KEY)); if (r && Array.isArray(r.reactions)) return r; } catch (e) {} return { reactions: [], fails: 0 }; }
+function saveRec(r) { try { localStorage.setItem(REC_KEY, JSON.stringify(r)); } catch (e) {} }
+const judge = ms => (ms <= 150 ? '빠름' : ms <= 300 ? '보통' : '늦음');
+function recLine() {
+  const r = loadRec();
+  if (!r.reactions.length) return '반응속도 기록이 아직 없어요 · 150ms 이하 빠름 / 300ms 이하 보통';
+  const last = r.reactions.slice(-10);
+  return `최고 ${Math.min(...r.reactions)}ms · 최근 10회 평균 ${Math.round(last.reduce((a, b) => a + b, 0) / last.length)}ms · 실패 ${r.fails}회`;
+}
+
+let T = {};
+
+/* ═══ 0) 인트로 · 카운트다운 ═══ */
+let openAt = 0, introTimer = 0, preClicks = 0;
+$('startBtn').addEventListener('click', () => {
+  $('startDim').hidden = true; $('quickBtn').hidden = true;
+  phaseIntro = 'count';
+  preClicks = 0;
+  /* 남은 시간을 버려서 찍는다 — 05→00 이 1초씩 서고, 00:00 도 1초 선 뒤에 열린다 */
+  openAt = now() + (CFG.open + 1) * 1000;
+  clearInterval(introTimer);
+  introTimer = setInterval(tickIntro, 20);
+  tickIntro();
+});
+$('cancelBtn').addEventListener('click', () => {});
+function tickIntro() {
+  if (phaseIntro !== 'count') return;
+  const left = openAt - now();
+  if (left <= 0) {
+    phaseIntro = 'open';
+    clearInterval(introTimer);
+    T.open = openAt;
+    $('bookBtn').textContent = '예매하기';
+    $('bookBtn').className = 'in-btn is-open';
+    return;
+  }
+  $('bookBtn').textContent = `남은시간 00:${pad2(Math.max(0, Math.ceil(left / 1000) - 1))}`;
+}
+/* 예매하기 — 켜지기 전 클릭은 무시하고, 켜진 뒤 첫 클릭만 반영한다 */
+$('bookBtn').addEventListener('pointerdown', e => {
+  if (phaseIntro === 'count') { preClicks++; return; }
+  /* 몰림으로 응답이 늦는 동안 예매하기를 또 누르면 앞 요청은 버려지고 새 요청이 들어간다.
+     순번은 마지막으로 누른 시각 기준으로 다시 정해지고, 응답 대기도 처음부터 다시 걸린다 */
+  if (phaseIntro === 'clicked') {
+    if (!$('screen-intro').classList.contains('is-active')) return;
+    T.reclicks = (T.reclicks || 0) + 1;
+    T.lastClick = now();
+    requestEntry((T.lastClick - T.open) / 1000, true);
+    return;
+  }
+  if (phaseIntro !== 'open') return;
+  e.preventDefault();
+  phaseIntro = 'clicked';
+  T.click = now();
+  T.reactionMs = Math.round(T.click - T.open);
+  T.preClicks = preClicks;
+  const r = loadRec(); r.reactions.push(T.reactionMs); r.reactions = r.reactions.slice(-200); saveRec(r);
+  requestEntry(T.reactionMs / 1000, true);
+});
+
+/* 활성화 후 첫 클릭 다음에 또 누른 횟수 — 버튼 화면이든, 넘어간 직후 확인 중 화면이든 센다 */
+document.addEventListener('pointerdown', () => {
+  if (phaseIntro !== 'clicked') return;
+  if ($('screen-intro').classList.contains('is-active') || $('screen-loading').classList.contains('is-active')) T.postClicks = (T.postClicks || 0) + 1;
+}, true);
+
+/* ═══ 1) 접속 중 — 접속자 몰림이 켜져 있으면 응답 대기와 드문 오류가 생긴다 ═══ */
+function showChecking() {
+  show('screen-loading');
+  $('loadSpin').hidden = false; $('retryBtn').hidden = true;
+  $('loadL1').textContent = '대기 순서를 확인 중이에요.';
+  $('loadL2').textContent = '잠시만 기다려 주세요.';
+}
+/* fromIntro: 예매하기 버튼에서 온 첫 요청. 몰림이 켜져 있으면 응답이 올 때까지 화면이 그대로 멈춰 있다
+   (버튼을 또 누를 수 있다). 순번은 요청이 도착한 시각 기준이라 이 대기는 순번에 영향이 없다 */
+let entryToken = 0;
+function requestEntry(arrivalSec, fromIntro) {
+  const token = ++entryToken, alive = () => token === entryToken;
+  const rank = () => rankFor(arrivalSec + 0.012);   // 내 네트워크 지연 포함
+  if (!CFG.overload) { showChecking(); setTimeout(() => alive() && startQueue(rank()), LOADING_MS); return; }
+  if (!fromIntro) showChecking();
+  const lv = level(), lat = sampleLat(lv), fail = Math.random() < lv.err;
+  T.netWaitMs = (T.netWaitMs || 0) + Math.round(lat * 1000);
+  setTimeout(() => {
+    if (!alive()) return;
+    if (!fail) { showChecking(); setTimeout(() => alive() && startQueue(rank()), LOADING_MS); return; }
+    show('screen-loading');
+    $('loadSpin').hidden = true; $('retryBtn').hidden = false;
+    $('loadL1').textContent = '접속자가 많아 연결이 지연되고 있어요.';
+    $('loadL2').textContent = '잠시 후 다시 시도해 주세요.';
+    T.netErrors = (T.netErrors || 0) + 1;
+  }, lat * 1000);
+}
+/* 다시 시도한 시점 기준으로 순번이 다시 매겨진다 */
+$('retryBtn').addEventListener('click', () => requestEntry((now() - T.open) / 1000));
+
+/* ═══ 2) 대기열 ═══ */
+function phaseText(st) {
+  if (st.isDone) return ['회원님의 순서입니다.', '예매를 진행해주세요'];
+  if (st.isAlmost) return ['곧 회원님의 순서가 다가옵니다.', '예매를 준비해주세요.'];
+  return ['접속 인원이 많아 대기 중입니다.', '조금만 기다려주세요.'];
+}
+const Q = { rank: 0, entered: false, enterAt: 0, seatsAtEntry: SEATS, seatsNow: SEATS };
+function startQueue(rank) {
+  show('screen-queue');
+  T.firstRank = rank;
+  Q.rank = rank; Q.entered = false; Q.seatsNow = SEATS;
+  const t0 = now();
+  const render = () => {
+    const elapsed = (now() - t0) / 1000 * CFG.speed;
+    const entered = Math.min(rank - 1, Math.floor(elapsed * RATE));
+    const ahead = rank - 1 - entered;
+    const seats = Math.max(0, Math.round(seatsAfter(entered)));
+    Q.seatsNow = seats;
+    const pct = rank > 1 ? entered / (rank - 1) * 100 : 100;
+    const isDone = ahead <= 0, isAlmost = pct > ALMOST_PERCENT;
+    $('queueRank').textContent = n(Math.max(0, ahead));
+    $('queueFill').style.width = pct + '%';
+    $('queueBar').classList.toggle('is-done', isDone);
+    $('waitRoot').classList.toggle('is-almost', isAlmost);
+    $('queueTotal').textContent = n(Math.max(0, CFG.crowd - entered)) + '명';
+    const rate = Math.min(100, Math.floor((SEATS - seats) / SEATS * 100));
+    $('bookingRate').textContent = rate + '%';
+    $('bookingRate').dataset.rate = rate;
+    const [l1, l2] = phaseText({ isDone, isAlmost });
+    $('waitLine1').textContent = l1; $('waitLine2').textContent = l2;
+    if (seats < 1 && ahead > 0) {
+      clearInterval(timer);
+      T.queueEnd = now();
+      showResult({ fail: true, soldout: true, title: '매진되었습니다', msg: `차례가 오기 전에 좌석이 모두 팔렸어요\n매진 때 내 앞 대기 ${n(ahead)}명` });
+    } else if (isDone) {
+      clearInterval(timer);
+      Q.entered = true; Q.enterAt = now(); Q.seatsAtEntry = seats;
+      enterSeat();
+    }
+  };
+  render();
+  const timer = setInterval(render, 100);
+}
+/* 입장 뒤 남은 좌석 — 연석 구간은 초당 150석, 단석만 남으면 초당 40석씩 빠진다 (실제 시간 기준) */
+function liveSeats() {
+  if (!Q.entered) return Q.seatsNow;
+  const t = (now() - Q.enterAt) / 1000, s = Q.seatsAtEntry, cut = SEATS * SCATTER;
+  const tHi = Math.max(0, s - cut) / CAP_DRAIN;
+  if (t <= tHi) return Math.max(0, s - t * CAP_DRAIN);
+  return Math.max(0, Math.min(s, cut) - (t - tHi) * CAP_DRAIN_SINGLE);
+}
+
+/* ═══ 좌석 도면 — 구장별 설정 ═══ */
+const SOLD_FILL = '#edeff3';
+const rad = d => d * Math.PI / 180;
+const f1 = v => v.toFixed(1);
+let ST, GRADE, VB, C, HOME, TIER, SEAT;
+const P = (r, a) => [C.x + r * Math.cos(rad(a)), C.y + r * Math.sin(rad(a))];
+/* 내야 스탠드는 홈 뒤쪽이 두껍고 1·3루 끝으로 갈수록 얇다 — 경계 반지름을 각도에 따라 바꾼다 */
+const bendL = a => Math.pow(Math.max(0, Math.sin(rad(a))), 1.5);
+const lerpR = (side, bot) => a => side + (bot - side) * bendL(a);
+const seq = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
+const rep = (g, k) => Array(k).fill(g);
+function makeRun(out) {
+  return (tier, a, b, ids, grades) => ids.forEach((id, k) => {
+    const x0 = a + (b - a) * k / ids.length, x1 = a + (b - a) * (k + 1) / ids.length;
+    out.push({ id, grade: grades[k], tier, a0: Math.min(x0, x1), a1: Math.max(x0, x1), name: `${id}블록` });
+  });
+}
+function scoreboard(w = 84) {
+  return `<rect x="${C.x - w / 2}" y="${ST.boardY}" width="${w}" height="${ST.boardH}" rx="4" fill="#c9ccd3"/><text x="${C.x}" y="${ST.boardY + ST.boardH / 2}" text-anchor="middle" dominant-baseline="central" fill="#4a4f5b" font-size="${ST.boardH > 30 ? 16 : 12}" font-weight="700">전광판</text>`;
+}
+const STADIUMS = {
+  /* 잠실야구장 */
+  jamsil: {
+    game: 'LG vs 두산', venue: '잠실야구장', posterTop: '2026 JAMSIL SERIES', posterVs: 'LG<small>vs</small>두산',
+    posterBg: 'radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.28), transparent 60%), linear-gradient(180deg, #2b3a63 0%, #1c2a4a 55%, #10301f 100%)',
+    vb: { w: 840, h: 850 }, c: { x: 420, y: 425 }, home: { x: 420, y: 585 }, boardY: 18, boardH: 22,
+    seat: { spacing: 3.2, radius: 1.15, pad: 2.8 },
+    grade: {
+      premium:  { name: '중앙석',     price: 70000, color: '#0b4fa3', rank: 0 },
+      table:    { name: '테이블석',   price: 47000, color: '#5e2f8f', rank: 1 },
+      exciting: { name: '익사이팅존', price: 30000, color: '#c3c4c9', rank: 2, dark: true },
+      blue:     { name: '블루석',     price: 22000, color: '#2c6aa5', rank: 3 },
+      orange:   { name: '오렌지석',   price: 20000, color: '#f08a1c', rank: 4 },
+      red:      { name: '레드석',     price: 17000, color: '#dc2a24', rank: 5 },
+      navy:     { name: '네이비석',   price: 14000, color: '#25275a', rank: 6 },
+      cheer:    { name: '그린응원석', price: 11000, color: '#1f9a3e', edge: '#f07a1e', rank: 7 },
+      green:    { name: '그린석',     price: 9000,  color: '#1f9a3e', rank: 8 },
+    },
+    tier: (() => {
+      const S = [397, 347, 307, 265], B = [397, 290, 250, 205];
+      const Rb = i => lerpR(S[i], B[i]);
+      return {
+        1: { rin: Rb(3), rout: Rb(2) }, 2: { rin: Rb(2), rout: Rb(1) }, 3: { rin: Rb(1), rout: Rb(0) },
+        4: { rin: () => 305, rout: () => 392 },
+        ex: { rin: a => Rb(3)(a) - 26, rout: a => Rb(3)(a) - 5 },
+      };
+    })(),
+    blocks() {
+      const out = [], run = makeRun(out);
+      run(1, -10, 74, seq(101, 111), [...rep('red', 6), ...rep('blue', 3), ...rep('table', 2)]);
+      run(1, 106, 190, seq(112, 122), [...rep('table', 2), ...rep('blue', 3), ...rep('red', 6)]);
+      run(2, -12, 76, seq(201, 213), [...rep('red', 4), ...rep('orange', 4), ...rep('blue', 3), ...rep('table', 2)]);
+      out.push({ id: '중앙석', grade: 'premium', tier: 2, a0: 78, a1: 102, name: '중앙석', showName: true });
+      run(2, 104, 192, seq(214, 226), [...rep('table', 2), ...rep('blue', 3), ...rep('orange', 4), ...rep('red', 4)]);
+      run(3, -9, 189, seq(301, 334), rep('navy', 34));
+      run(4, -16, -84, seq(401, 411), [...rep('green', 4), ...rep('cheer', 4), ...rep('green', 3)]);
+      run(4, 262, 198, seq(412, 422), rep('green', 11));
+      out.push({ id: '익1', grade: 'exciting', tier: 'ex', a0: -12, a1: 20, name: '익사이팅존(1루)', strip: true });
+      out.push({ id: '익3', grade: 'exciting', tier: 'ex', a0: 160, a1: 192, name: '익사이팅존(3루)', strip: true });
+      return out;
+    },
+    field() {
+      const H = HOME, d = 68;
+      let s = `<circle cx="${C.x}" cy="${C.y - 20}" r="292" fill="#f0a63c"/>`;
+      s += `<circle cx="${C.x}" cy="${C.y - 20}" r="278" fill="#7bb352"/>`;
+      s += `<circle cx="${C.x}" cy="${H.y - d - 8}" r="${d * 1.45}" fill="#f0a63c"/>`;
+      s += `<path d="M${H.x} ${H.y}L${H.x + d} ${H.y - d}L${H.x} ${H.y - 2 * d}L${H.x - d} ${H.y - d}Z" fill="#7bb352" stroke="#3d3d3d" stroke-width="1"/>`;
+      s += `<path d="M${H.x} ${H.y}L${H.x + 215} ${H.y - 215}M${H.x} ${H.y}L${H.x - 215} ${H.y - 215}" stroke="#3d3d3d" stroke-width=".8" opacity=".6"/>`;
+      s += `<circle cx="${H.x}" cy="${H.y - d}" r="9" fill="#f0a63c" stroke="#3d3d3d" stroke-width=".8"/>`;
+      s += `<circle cx="${H.x}" cy="${H.y + 6}" r="13" fill="#f0a63c" stroke="#3d3d3d" stroke-width=".8"/>`;
+      return s + scoreboard();
+    },
+    /* 선호 순서: 0 중앙·테이블·오렌지(응원석)·익사이팅·레드·블루 > 1 오렌지 뒤 네이비(304~309, 326~331) > 2 그 외 네이비 > 3 외야 */
+    pref(s, b) {
+      const g = s.grade;
+      if (['premium', 'table', 'orange', 'exciting', 'red', 'blue'].includes(g)) return 0;
+      if (g === 'navy') return (b.id >= 304 && b.id <= 309) || (b.id >= 326 && b.id <= 331) ? 1 : 2;
+      return 3;
+    },
+    late: ['orange', 'red', 'blue'],
+  },
+
+  /* 광주-기아 챔피언스필드 — 3루가 홈(KIA). 등급 이름·가격은 연습용 임시값 */
+  gwangju: {
+    game: 'KIA vs LG', venue: '광주-기아 챔피언스필드', posterTop: '2026 GWANGJU SERIES', posterVs: 'KIA<small>vs</small>LG',
+    posterBg: 'radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.22), transparent 60%), linear-gradient(180deg, #a31d24 0%, #5a1215 55%, #1c0b0c 100%)',
+    vb: { w: 1250, h: 1380 }, c: { x: 622, y: 660 }, home: { x: 622, y: 925 }, boardY: 52, boardH: 40,
+    seat: { spacing: 5, radius: 1.8, pad: 4.3 },
+    grade: {
+      champ:    { name: '챔피언석',     price: 80000, color: '#00a0a8', rank: 0 },
+      ctable:   { name: '중앙테이블석', price: 55000, color: '#3aaed8', rank: 1 },
+      surprise: { name: '서프라이즈석', price: 35000, color: '#e0662c', rank: 2 },
+      party:    { name: '파티석',       price: 30000, color: '#f39a85', rank: 3 },
+      green:    { name: '그린석',       price: 30000, color: '#74b77a', rank: 4 },
+      red:      { name: '레드석',       price: 25000, color: '#e63946', rank: 5 },
+      yellow:   { name: '옐로우석',     price: 22000, color: '#e8b54d', rank: 6 },
+      coral:    { name: '코랄석',       price: 20000, color: '#e3826f', rank: 7 },
+      infam:    { name: '내야가족석',   price: 18000, color: '#f27f7a', rank: 8 },
+      pink:     { name: '핑크석',       price: 15000, color: '#d9558f', rank: 9 },
+      sky:      { name: '스카이석',     price: 12000, color: '#7ba5d8', rank: 10 },
+      outfield: { name: '외야석',       price: 9000,  color: '#c9cf2a', rank: 11, dark: true },
+      offam:    { name: '외야가족석',   price: 9000,  color: '#6aaa49', rank: 12 },
+    },
+    tier: (() => {
+      // 1층은 1·3루 끝에서 파울라인 쪽으로 좁아진다
+      const in1 = a => lerpR(292, 355)(a) + Math.max(0, -2 - a) * 8 + Math.max(0, a - 182) * 8;
+      return {
+        1: { rin: in1, rout: lerpR(440, 512) },
+        ch: { rin: () => 352, rout: () => 398 },
+        tb: { rin: () => 404, rout: () => 516 },
+        3: { rin: lerpR(447, 541), rout: lerpR(490, 585) },
+        5: { rin: lerpR(518, 592), rout: lerpR(603, 700) },
+        side: { rin: () => 447, rout: () => 515 },
+        of: { rin: () => 470, rout: () => 555 },
+        fam: { rin: () => 560, rout: () => 618 },
+        sp: { rin: a => in1(a) - 32, rout: a => in1(a) - 6 },
+      };
+    })(),
+    blocks() {
+      const out = [], run = makeRun(out);
+      const by = (ids, grades, bounds) => ids.forEach((id, k) => out.push({ id, grade: grades[k], tier: 1, a0: bounds[k], a1: bounds[k + 1], name: `${id}블록` }));
+      // 1층 1루 101~113 · 3루 116~127 (이미지의 블록 위치에 맞춘 경계)
+      by(seq(101, 113), [...rep('coral', 6), ...rep('yellow', 5), ...rep('green', 2)], [-17, -12.9, -8.7, -2.5, 5.5, 13.3, 21.4, 29.9, 38.5, 47.4, 55.3, 62.3, 68.5, 73]);
+      out.push({ id: '챔피언석', grade: 'champ', tier: 'ch', a0: 73, a1: 107, name: '챔피언석', showName: true });
+      out.push({ id: '중앙테이블석', grade: 'ctable', tier: 'tb', a0: 73, a1: 107, name: '중앙테이블석', showName: true });
+      by(seq(116, 127), ['green', 'green', 'yellow', 'yellow', 'red', 'red', 'red', 'yellow', 'coral', 'coral', 'coral', 'coral'], [107, 110.9, 117.4, 124.5, 132.5, 141.4, 149.9, 158.2, 166.4, 174.2, 182.2, 188.8, 194]);
+      // 3xx(핑크)·5xx(스카이)
+      run(3, 4.6, 174.5, seq(301, 335), rep('pink', 35));
+      run(5, -1, 181, seq(501, 535), rep('sky', 35));
+      // 서프라이즈·파티·내야가족
+      out.push({ id: 'S1', grade: 'surprise', tier: 'sp', a0: 12, a1: 30, name: '1루 서프라이즈석', strip: true });
+      out.push({ id: 'S3', grade: 'surprise', tier: 'sp', a0: 150, a1: 168, name: '3루 서프라이즈석', strip: true });
+      out.push({ id: 'P1', grade: 'party', tier: 'side', a0: -8, a1: -1, name: '1루 파티석', strip: true });
+      out.push({ id: 'P3', grade: 'party', tier: 'side', a0: 181, a1: 188, name: '3루 파티석', strip: true });
+      out.push({ id: 'F1', grade: 'infam', tier: 'side', a0: -24, a1: -9, name: '1루 내야가족석', strip: true });
+      out.push({ id: 'F3', grade: 'infam', tier: 'side', a0: 188, a1: 202, name: '3루 내야가족석', strip: true });
+      // 외야 — 한쪽을 5구역으로
+      [['3루', 203, 259], ['1루', -79, -24]].forEach(([side, a, b]) => {
+        for (let k = 0; k < 5; k++) {
+          const x0 = a + (b - a) * k / 5, x1 = a + (b - a) * (k + 1) / 5;
+          out.push({ id: `${side}외야${k + 1}`, grade: 'outfield', tier: 'of', a0: x0, a1: x1, name: `${side} 외야석 ${k + 1}구역`, showName: k === 2, label: '외야석' });
+          out.push({ id: `${side}외가${k + 1}`, grade: 'offam', tier: 'fam', a0: x0, a1: x1, name: `${side} 외야가족석 ${k + 1}구역`, showName: k === 2, label: '외야가족석' });
+        }
+      });
+      return out;
+    },
+    field() {
+      const H = HOME, fan = r => { const q = r * Math.SQRT1_2; return `M${H.x} ${H.y}L${f1(H.x - q)} ${f1(H.y - q)}A${r} ${r} 0 0 1 ${f1(H.x + q)} ${f1(H.y - q)}Z`; };
+      const d = 112;
+      let s = `<path d="${fan(742)}" fill="#f0a63c"/><path d="${fan(716)}" fill="#7bb352"/>`;
+      s += `<circle cx="${H.x}" cy="${H.y - 70}" r="168" fill="#f0a63c"/>`;
+      s += `<path d="M${H.x} ${H.y}L${H.x + d} ${H.y - d}L${H.x} ${H.y - 2 * d}L${H.x - d} ${H.y - d}Z" fill="#7bb352" stroke="#3d3d3d" stroke-width="1"/>`;
+      s += `<path d="M${H.x} ${H.y}L${H.x + 520} ${H.y - 520}M${H.x} ${H.y}L${H.x - 520} ${H.y - 520}" stroke="#3d3d3d" stroke-width="1" opacity=".5"/>`;
+      s += `<circle cx="${H.x}" cy="${H.y - d}" r="14" fill="#f0a63c" stroke="#3d3d3d" stroke-width="1"/>`;
+      s += `<circle cx="${H.x}" cy="${H.y + 8}" r="20" fill="#f0a63c" stroke="#3d3d3d" stroke-width="1"/>`;
+      s += `<path d="${ringPathRaw(470, 618, 259.5, 280.5)}" fill="#e4e7ee"/><text x="${C.x}" y="${C.y - 520}" text-anchor="middle" dominant-baseline="central" fill="#9aa0ad" font-size="12" font-weight="600">키즈챔피언스필드</text>`;
+      s += `<text x="${C.x - 190}" y="${C.y - 40}" text-anchor="middle" fill="rgba(255,255,255,.55)" font-size="30" font-weight="800">3루(HOME)</text><text x="${C.x + 190}" y="${C.y - 40}" text-anchor="middle" fill="rgba(255,255,255,.55)" font-size="30" font-weight="800">1루(AWAY)</text>`;
+      return s + scoreboard(276);
+    },
+    /* 선호 순서(임시): 0 챔피언·중앙테이블·그린·레드(3루 응원)·서프라이즈·파티 > 1 옐로우·코랄 > 2 핑크·스카이·내야가족 > 3 외야 */
+    pref(s) {
+      const g = s.grade;
+      if (['champ', 'ctable', 'green', 'red', 'surprise', 'party'].includes(g)) return 0;
+      if (g === 'yellow' || g === 'coral') return 1;
+      if (g === 'pink' || g === 'sky' || g === 'infam') return 2;
+      return 3;
+    },
+    late: ['yellow', 'coral', 'green'],
+  },
+};
+function ringPathRaw(r1, r2, a0, a1) {
+  const N = Math.max(2, Math.ceil((a1 - a0) / 1.5)), pts = [];
+  for (let i = 0; i <= N; i++) pts.push(P(r2, a0 + (a1 - a0) * i / N));
+  for (let i = N; i >= 0; i--) pts.push(P(r1, a0 + (a1 - a0) * i / N));
+  return 'M' + pts.map(p => f1(p[0]) + ' ' + f1(p[1])).join('L') + 'Z';
+}
+function useStadium(key) {
+  ST = STADIUMS[key] || STADIUMS.jamsil;
+  GRADE = ST.grade; VB = ST.vb; C = ST.c; HOME = ST.home; TIER = ST.tier; SEAT = ST.seat;
+  const map = $('planMap'); map.style.width = VB.w + 'px'; map.style.height = VB.h + 'px';
+  ['baseLayer', 'seatLayer', 'blockLayer', 'miniLayer'].forEach(id => $(id).setAttribute('viewBox', `0 0 ${VB.w} ${VB.h}`));
+  document.querySelectorAll('.js-game').forEach(el => { el.textContent = ST.game; });
+  document.querySelectorAll('.js-gv').forEach(el => { el.textContent = `${ST.game} · ${ST.venue}`; });
+  $('pTop').textContent = ST.posterTop; $('pVs').innerHTML = ST.posterVs;
+  $('pMeta').innerHTML = `2026.10.20 TUE 6:30PM<span>${ST.venue}</span>`;
+  document.querySelector('.in-poster').style.background = ST.posterBg;
+  rowsOf = null; selGrade = null; gpMode = 'list';
+}
+function ringPath(tier, a0, a1, g = 0.6) {
+  const t = TIER[tier];
+  a0 += g; a1 -= g;
+  const N = Math.max(2, Math.ceil((a1 - a0) / 1.5)), pts = [];
+  for (let i = 0; i <= N; i++) { const a = a0 + (a1 - a0) * i / N; pts.push(P(t.rout(a) - 1.2, a)); }
+  for (let i = N; i >= 0; i--) { const a = a0 + (a1 - a0) * i / N; pts.push(P(t.rin(a) + 1.2, a)); }
+  return 'M' + pts.map(p => f1(p[0]) + ' ' + f1(p[1])).join('L') + 'Z';
+}
+const buildBlocks = () => ST.blocks();
+const renderField = () => ST.field();
+let blocks = [], seats = [], seatEls = [];
+function renderBase() {
+  return `<rect width="${VB.w}" height="${VB.h}" fill="${SOLD_FILL}"/>` + renderField()
+    + blocks.map(b => `<path d="${ringPath(b.tier, b.a0, b.a1)}" fill="#fff"/>`).join('');
+}
+function label(b) {
+  const t = TIER[b.tier], mid = (b.a0 + b.a1) / 2;
+  const [x, y] = P((t.rin(mid) + t.rout(mid)) / 2, mid);
+  const fill = GRADE[b.grade].dark ? '#4a4f5b' : '#fff';
+  if (b.strip) {
+    let rot = mid + 90; while (rot > 90) rot -= 180;
+    return `<text x="${f1(x)}" y="${f1(y)}" transform="rotate(${f1(rot)} ${f1(x)} ${f1(y)})" text-anchor="middle" dominant-baseline="central" fill="${fill}" font-size="${VB.w > 1000 ? 12 : 9}" font-weight="700" pointer-events="none">${b.name}</text>`;
+  }
+  const big = VB.w > 1000 ? 1.45 : 1;
+  if (typeof b.id === 'number') return `<text x="${f1(x)}" y="${f1(y)}" text-anchor="middle" dominant-baseline="central" fill="${fill}" font-size="${f1(12 * big)}" font-weight="700" pointer-events="none">${b.id}</text>`;
+  if (!b.showName) return '';
+  return `<text x="${f1(x)}" y="${f1(y)}" text-anchor="middle" dominant-baseline="central" fill="${fill}" font-size="${f1(14 * big)}" font-weight="700" pointer-events="none">${b.label || b.name}</text>`;
+}
+function renderBlocks(withLabel = true) {
+  return blocks.map(b => {
+    const g = GRADE[b.grade];
+    const edge = g.edge ? ` stroke="${g.edge}" stroke-width="2.4"` : '';
+    return `<path class="blk" d="${ringPath(b.tier, b.a0, b.a1)}" fill="${g.color}"${edge}/>` + (withLabel ? label(b) : '');
+  }).join('');
+}
+function renderSeats() {
+  const out = [], sp = SEAT.spacing;
+  seats = [];
+  blocks.forEach((b, bi) => {
+    const t = TIER[b.tier], g = GRADE[b.grade], color = g.color;
+    const mid = (b.a0 + b.a1) / 2, lower = Math.sin(rad(mid)) > 0;
+    const maxDepth = Math.max(t.rout(b.a0) - t.rin(b.a0), t.rout(mid) - t.rin(mid), t.rout(b.a1) - t.rin(b.a1));
+    for (let k = 0; SEAT.pad + k * sp <= maxDepth - SEAT.pad; k++) {
+      const rMid = t.rin(mid) + SEAT.pad + k * sp;
+      const span = rad(b.a1 - b.a0 - 1.2) * rMid - SEAT.pad * 2;
+      const cols = Math.max(1, Math.floor(span / sp) + 1), used = (cols - 1) * sp;
+      const row = [];
+      for (let c = 0; c < cols; c++) {
+        const a = mid + (-used / 2 + c * sp) / rMid * 180 / Math.PI;
+        const r = t.rin(a) + SEAT.pad + k * sp;
+        if (r > t.rout(a) - SEAT.pad) continue;
+        row.push([a, r]);
+      }
+      row.forEach(([a, r], c) => {
+        const [x, y] = P(r, a);
+        const col = lower ? row.length - c : c + 1;
+        const i = seats.push({ bi, grade: b.grade, row: k + 1, col, x, y }) - 1;
+        out.push(`<circle class="nt-seat-dot is-open" r="${SEAT.radius}" cx="${f1(x)}" cy="${f1(y)}" fill="${color}" stroke="${color}" data-i="${i}"/>`);
+      });
+    }
+  });
+  return out.join('');
+}
+
+/* ═══ 판매 진행 ═══ */
+let sellOrder = [], sellCursor = 0, soldCount = 0, preSoldCount = 0;
+const sold = new Set(), soldList = [];
+let syncedIdx = 0;
+function buildPlan() {
+  sold.clear(); soldList.length = 0; sellCursor = 0; soldCount = 0; syncedIdx = 0; picked.length = 0;
+  blocks = buildBlocks();
+  $('baseLayer').innerHTML = renderBase();
+  $('seatLayer').innerHTML = renderSeats();
+  seatEls = [...$('seatLayer').children];
+  $('blockLayer').innerHTML = renderBlocks();
+  $('miniLayer').innerHTML = `<rect width="${VB.w}" height="${VB.h}" fill="${SOLD_FILL}"/>` + renderField() + renderBlocks(false);
+  blockEls = [...$('blockLayer').querySelectorAll('.blk')];
+  blockLabels = [...$('blockLayer').querySelectorAll('text')];
+  blockTotal = blocks.map(() => 0); gradeTotal = {};
+  seats.forEach(s => { blockTotal[s.bi]++; gradeTotal[s.grade] = (gradeTotal[s.grade] || 0) + 1; });
+  blockLeft = blockTotal.slice(); gradeLeft = { ...gradeTotal };
+  buildZones();
+  buildSellOrder();
+  renderRemain();
+}
+/* ─── 잔여석 집계 — 화면에 팔린 걸로 칠해진 좌석 기준 ─── */
+let selGrade = null;   // 선택한 관람 구역 키 (예: orange@1루)
+let blockEls = [], blockLabels = [], blockTotal = [], blockLeft = [], gradeTotal = {}, gradeLeft = {};
+/* 놀은 등급을 1루·3루·중앙으로 나눠 '관람 구역'으로 보여준다 (예: 1루 오렌지석) */
+let zones = [], zoneOf = [], zoneTotal = {}, zoneLeft = {};
+const ZONE_NOTE = {
+  orange: '응원단상 안전 난간 설치로 인해, 인근 구역 시야방해가 생길 수 있습니다. 도면 참고 후 관람에 참고 바랍니다.',
+  exciting: '익사이팅석은 안전상 문제로 초등학생까지는 관람 불가합니다. (보호자 동반시에도 입장불가)',
+};
+function sideOf(b) {
+  if (b.id === '익1') return '1루';
+  if (b.id === '익3') return '3루';
+  if (b.grade === 'premium') return '';
+  const m = (b.a0 + b.a1) / 2;
+  return m < 80 ? '1루' : m > 100 ? '3루' : '중앙';
+}
+function buildZones() {
+  const map = new Map(), SO = { '': 0, '1루': 0, '3루': 1, '중앙': 2 };
+  zoneOf = []; zoneTotal = {};
+  blocks.forEach((b, bi) => {
+    const side = sideOf(b), key = `${b.grade}@${side}`;
+    if (!map.has(key)) map.set(key, { key, grade: b.grade, name: side ? `${side} ${GRADE[b.grade].name}` : GRADE[b.grade].name });
+    zoneOf[bi] = key; zoneTotal[key] = (zoneTotal[key] || 0) + blockTotal[bi];
+  });
+  zones = [...map.values()].filter(z => zoneTotal[z.key] > 0).sort((x, y) => (GRADE[x.grade].rank - GRADE[y.grade].rank) || (SO[x.key.split('@')[1]] - SO[y.key.split('@')[1]]));
+  zoneLeft = { ...zoneTotal };
+}
+const zoneBy = k => zones.find(z => z.key === k);
+let gpMode = 'list', auResult = null;   // list → count(매수) → result(배정 결과)
+const ICON_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+const ICON_X = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 2l12 12M14 2L2 14"/></svg>';
+const ICON_INFO = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="10" cy="10" r="7.3"/><path d="M10 9v5" stroke-linecap="round"/><circle cx="10" cy="6.3" r=".6" fill="currentColor" stroke="none"/></svg>';
+const ICON_MINUS = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 8h12"/></svg>';
+const ICON_PLUS = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 8h12M8 2v12"/></svg>';
+const dotOf = g => `background:${g.color}`;
+function panelHTML() {
+  const x = `<button type="button" class="gp-x" data-act="close" aria-label="닫기"></button>`;
+  if (gpMode === 'count') {
+    const z = zoneBy(auGrade), g = GRADE[z.grade];
+    return `<div class="gp"><div class="as-head"><button type="button" class="as-back" data-act="back" aria-label="관람 구역 다시 선택">${ICON_BACK}</button><h3>자동 배정 받을 좌석 수를 선택해 주세요</h3>${x}</div>
+      <div class="as-body"><div class="ac-card"><div class="ac-info"><p class="ac-name"><i style="${dotOf(g)}"></i><span>${z.name}</span></p><p class="ac-price">${won(g.price)}</p></div>
+      <div class="ac-step"><button type="button" data-act="minus" aria-label="한 장 줄이기"${auCount <= 0 ? ' disabled' : ''}>${ICON_MINUS}</button><output>${auCount}</output><button type="button" data-act="plus" aria-label="한 장 늘리기"${auCount >= MAX_PICK ? ' disabled' : ''}>${ICON_PLUS}</button></div></div></div>
+      <div class="gp-foot flat"><button type="button" class="ent primary" data-act="go"${auCount ? '' : ' disabled'}>선택 완료</button></div></div>`;
+  }
+  if (gpMode === 'result') {
+    const items = auResult.map(i => { const st = seats[i], g = GRADE[st.grade]; return `<div class="ar-div"></div><div class="ar-item"><div class="ar-info"><b>${zoneBy(zoneOf[st.bi]).name}</b><span>${seatName(st)}</span></div><strong>${won(g.price)}</strong></div>`; }).join('');
+    return `<div class="gp"><div class="as-head"><h3>&nbsp;</h3></div><div class="as-body"><div class="ar-card"><p class="ar-msg">좌석 ${auResult.length}개가 자동 배정됐어요</p>${items}</div></div>
+      <div class="gp-foot flat"><button type="button" class="ent primary" data-act="confirm">확인 완료</button></div></div>`;
+  }
+  const rows = zones.map(z => {
+    const g = GRADE[z.grade], note = ZONE_NOTE[z.grade];
+    return `<li><button type="button" class="gp-item${selGrade === z.key ? ' sel' : ''}" data-zone="${z.key}"><span class="gp-row"><i style="${dotOf(g)}"></i><b>${z.name}</b><em>${n(Math.max(0, zoneLeft[z.key]))}</em></span>${note ? `<span class="gp-note">${ICON_INFO}<span>${note}</span></span>` : ''}</button></li>`;
+  }).join('');
+  const foot = selGrade ? `<div class="gp-foot"><button type="button" class="ent" data-act="auto">자동 배정받기</button><button type="button" class="ent primary" data-act="direct">직접 좌석 선택하기</button></div>` : '';
+  return `<div class="gp"><div class="gp-head"><h3>관람 구역을 선택해 주세요</h3>${x}</div><div class="gp-body"><ul class="gp-list">${rows}</ul></div>${foot}</div>`;
+}
+function renderPanel() {
+  const html = panelHTML();
+  ['gradeLayer', 'remainSide'].forEach(id => {
+    const el = $(id), body = el.querySelector('.gp-body, .as-body'), top = body ? body.scrollTop : 0, mode = el.dataset.mode;
+    el.innerHTML = html; el.dataset.mode = gpMode;
+    if (mode === gpMode) { const b2 = el.querySelector('.gp-body, .as-body'); if (b2) b2.scrollTop = top; }
+  });
+}
+/* 잔여석이 바뀔 땐 숫자만 고친다 — 통째로 다시 그리면 누르는 도중 버튼이 바뀌어 클릭이 사라진다 */
+function updateCounts() {
+  ['gradeLayer', 'remainSide'].forEach(id => {
+    const items = $(id).querySelectorAll('[data-zone]');
+    if (!items.length) { if (gpMode === 'list') renderPanel(); return; }
+    items.forEach(el => { const em = el.querySelector('em'), v = n(Math.max(0, zoneLeft[el.dataset.zone])); if (em.textContent !== v) em.textContent = v; });
+  });
+}
+function renderRemain() {
+  if (gpMode === 'list') updateCounts();
+  const left = liveSeats(), cut = SEATS * SCATTER;
+  const entered = left >= cut ? (SEATS - left) / SEATS_PER_ENTRY : PAIR_CUT_AT + (cut - left) / SINGLE_PER_ENTRY;
+  const openSeats = Object.values(gradeLeft).reduce((x, y) => x + y, 0);
+  $('liveBar').innerHTML = `입장 <b class="blue">${n(Math.max(0, entered))}명</b><i></i>남은 좌석 <b>${n(openSeats)}석</b>`;
+  // 구역은 팔릴수록 옅어지고, 매진되면 회색
+  blockEls.forEach((el, bi) => {
+    const left = blockLeft[bi];
+    if (left <= 0) { el.setAttribute('fill', '#d1d6de'); el.style.fillOpacity = 1; }
+    else el.style.fillOpacity = (0.35 + 0.65 * left / blockTotal[bi]).toFixed(2);
+    el.dataset.left = left;
+  });
+}
+/* 일반 예매에 안 풀리는 약 24%(선예매·구단 배정분)는 처음부터 팔린 상태.
+   나머지는 홈플레이트에 가깝고 좋은 등급부터 팔리며, 20%는 자리를 가리지 않고 팔린다 */
+/* 선호도 순서 — 이 순서대로 먼저 팔린다
+   0 중앙석·테이블·오렌지(응원석)·익사이팅·레드·블루 > 1 오렌지 뒤 네이비(304~309, 326~331) > 2 그 외 네이비 > 3 외야 */
+const prefGroup = s => ST.pref(s, blocks[s.bi]);
+function buildSellOrder() {
+  const N = seats.length;
+  const at = new Map(seats.map((s, i) => [`${s.bi}-${s.row}-${s.col}`, i]));
+  const nbr = (i, d) => { const s = seats[i]; return at.get(`${s.bi}-${s.row}-${s.col + d}`); };
+  const taken = new Uint8Array(N), single = new Uint8Array(N), late = new Uint8Array(N);
+  const shuffle = a => { for (let x = a.length - 1; x > 0; x--) { const y = Math.floor(Math.random() * (x + 1)); [a[x], a[y]] = [a[y], a[x]]; } return a; };
+  /* 한 사람이 사는 매수 — 1매 3% · 2매 20% · 3매 7% · 4매 70% */
+  const kPick = () => { const r = Math.random(); return r < .03 ? 1 : r < .23 ? 2 : r < .30 ? 3 : 4; };
+  /* 한 번의 구매: 고른 자리에서 같은 열 오른쪽·왼쪽으로 붙은 빈자리를 k석까지 함께 산다.
+     그래서 4연석이 가장 먼저 사라지고 3 > 2 > 단석 순으로 남는다 */
+  /* 통로(열의 양 끝)에서 몇 번째 자리인지 — 0이면 통로 바로 옆 */
+  const rowLen = new Map();
+  seats.forEach(s => { const k = `${s.bi}-${s.row}`; rowLen.set(k, Math.max(rowLen.get(k) || 0, s.col)); });
+  const aisle = i => { const s = seats[i]; return Math.min(s.col - 1, rowLen.get(`${s.bi}-${s.row}`) - s.col); };
+  const grab = (i, k) => {
+    const out = [i]; taken[i] = 1;
+    // 통로에 가까운 쪽으로 먼저 붙여 산다 — 통로 자리가 혼자 남지 않게
+    const s0 = seats[i], leftFirst = s0.col - 1 <= rowLen.get(`${s0.bi}-${s0.row}`) - s0.col;
+    let a = nbr(i, leftFirst ? -1 : 1), b = nbr(i, leftFirst ? 1 : -1);
+    const da = leftFirst ? -1 : 1, db = -da;
+    while (out.length < k) {
+      if (a != null && !taken[a] && !single[a] && !late[a]) { out.push(a); taken[a] = 1; a = nbr(a, da); }
+      else if (b != null && !taken[b] && !single[b] && !late[b]) { out.push(b); taken[b] = 1; b = nbr(b, db); }
+      else break;
+    }
+    return out;
+  };
+  // 그룹 순서는 지키고(겹치지 않게), 같은 그룹 안에서는 통로에 가까운 자리부터. 4%만 자리를 가리지 않고 팔린다
+  /* 네렌지(오렌지 뒤 네이비)와 그 외 네이비는 같이 팔리되 네렌지가 더 빨리 — 네렌지는 약 4,500번째 입장자쯤 매진되고,
+     그때 그 외 네이비는 약 2/3가 팔려 있다. ①그룹은 그보다 먼저, 외야는 네이비 다음 */
+  const BAND = [[0, 1], [2, 0.74], [2, 1.16], [4, 1]];   // [시작, 폭] — 폭이 좁을수록 빨리 팔린다
+  const prefKey = i => {
+    const [base, width] = BAND[prefGroup(seats[i])];
+    if (Math.random() < 0.04) return Math.random() * (base + width);   // 4%는 순서와 상관없이 — 단, 자기 그룹 차례가 끝나기 전에는 팔린다
+    const u = Math.random() * 0.6 + Math.min(aisle(i), 3) * 0.25;   // 0 ~ 1.35, 통로 쪽이 작다
+    return base + u / 1.35 * width;
+  };
+  // 일반 예매에 안 풀리는 약 24%(선예매·구단 배정분) — 좋은 자리 위주(90%)로, 몇 석씩 묶어서 처음부터 팔린 상태
+  const pre = [], preTarget = Math.round(N * (1 - PUBLIC));
+  const preSeeds = seats.map((_, i) => ({ i, k: Math.random() < 0.1 ? Math.random() * 8 : prefKey(i) })).sort((a, b) => a.k - b.k);
+  for (const { i } of preSeeds) { if (pre.length >= preTarget) break; if (!taken[i]) pre.push(...grab(i, kPick())); }
+  preSoldCount = pre.length;
+  // 마지막까지 남을 흩어진 단석 — 2연석이 끝나는 시점(약 6,800번째)부터 이것만 남는다.
+  // 외야에 먼저 두고(네이비는 약 7,000번째에 다 나가도록), 모자랄 때만 그 외 네이비에. 같은 열에서 서로 붙지 않게
+  const rest = shuffle(seats.map((_, i) => i).filter(i => !taken[i]));
+  const target = Math.round(rest.length * SCATTER);
+  let cnt = 0;
+  for (const want of [3, 2]) {
+    for (const i of rest) {
+      if (cnt >= target) break;
+      if (single[i] || prefGroup(seats[i]) !== want) continue;
+      if (aisle(i) === 0) continue;   // 통로 자리는 먼저 팔리므로 마지막 단석으로 남기지 않는다
+      const l = nbr(i, -1), r = nbr(i, 1);
+      if ((l != null && single[l]) || (r != null && single[r])) continue;
+      single[i] = 1; cnt++;
+    }
+  }
+  /* 오렌지·레드·블루는 1·3루 각각 몇 석씩 늦게까지 남는다 — 약 2,000번째에도 10석 안팎이 보이고 약 3,500번째까지 다 팔린다 */
+  const LATE_PER = 14, lateCnt = {};
+  for (const i of rest) {
+    const s = seats[i];
+    if (single[i] || !ST.late.includes(s.grade) || aisle(i) === 0) continue;
+    const b = blocks[s.bi], key = s.grade + ((b.a0 + b.a1) / 2 < 90 ? '1루' : '3루');
+    if ((lateCnt[key] || 0) >= LATE_PER) continue;
+    const l = nbr(i, -1), r = nbr(i, 1);
+    if ((l != null && late[l]) || (r != null && late[r])) continue;
+    late[i] = 1; lateCnt[key] = (lateCnt[key] || 0) + 1;
+  }
+  // 선호도 순서대로 구매가 일어난다 (늦게 남는 자리는 자기 차례에 한 석씩)
+  const seeds = rest.filter(i => !single[i] && !late[i]).map(i => ({ i, k: prefKey(i) })).sort((a, b) => a.k - b.k);
+  const events = [];
+  for (const { i, k } of seeds) if (!taken[i]) events.push({ k, list: grab(i, kPick()) });
+  rest.filter(i => late[i]).forEach(i => { taken[i] = 1; events.push({ k: 2.05 + Math.random() * 0.25, list: [i] }); });
+  events.sort((a, b) => a.k - b.k);
+  const body = events.flatMap(e => e.list);
+  const singles = rest.filter(i => single[i]).map(i => ({ i, k: prefKey(i) })).sort((a, b) => a.k - b.k).map(o => o.i);
+  sellOrder = [...pre, ...body, ...singles];
+}
+/* 남은 좌석 수(모델) → 도면에서 팔려 있어야 할 동그라미 수 */
+const dotsSoldFor = left => Math.floor(preSoldCount + (seats.length - preSoldCount) * (1 - Math.max(0, left) / SEATS));
+function sellUpTo(target) {
+  while (soldCount < target && sellCursor < sellOrder.length) {
+    const i = sellOrder[sellCursor++];
+    if (picked.includes(i)) continue;   // 이미 잡은 자리는 남이 못 가져간다
+    sold.add(i); soldList.push(i); soldCount++;
+  }
+}
+function closeSeat(i) {
+  const dot = seatEls[i];
+  if (!dot || dot.classList.contains('is-sold')) return;
+  dot.classList.remove('is-open', 'is-picked');
+  dot.classList.add('is-sold');
+  dot.setAttribute('fill', SOLD_FILL); dot.setAttribute('stroke', SOLD_FILL);
+  const s = seats[i]; blockLeft[s.bi]--; gradeLeft[s.grade]--; zoneLeft[zoneOf[s.bi]]--; remainDirty = true;
+}
+let remainDirty = false;
+function syncSeats() {
+  while (syncedIdx < soldList.length) closeSeat(soldList[syncedIdx++]);
+  if (remainDirty || seatActive) { remainDirty = false; renderRemain(); }
+}
+const isSoldOut = () => (liveSeats() < 1 || sellCursor >= sellOrder.length) && !picked.length;
+
+/* ═══ 3) 좌석 화면 ═══ */
+let seatActive = false, seatTimer = 0;
+function enterSeat() {
+  T.queueEnd = now();
+  show('screen-seat');
+  seatActive = true; gpMode = 'list'; auBusy = false; auResult = null;
+  document.querySelector('.nt-seat-body').classList.remove('au-result');
+  resetView();
+  sellUpTo(dotsSoldFor(liveSeats()));
+  syncSeats();
+  openNotice();
+  startSeatTimer();
+}
+let timerText = '';
+function startSeatTimer() {
+  const until = now() + SEAT_LIMIT_MS;
+  const tick = () => {
+    sellUpTo(dotsSoldFor(liveSeats()));
+    syncSeats();
+    if (isSoldOut()) { finishSoldOut(); return; }
+    const left = Math.max(0, until - now());
+    const sec = Math.ceil(left / 1000);
+    const text = `${Math.floor(sec / 60)}:${pad2(sec % 60)}`;
+    if (text !== timerText) {
+      $('seatTimer').innerHTML = [...text].map((ch, k) => ch === ':' ? '<span class="nt-colon">:</span>'
+        : `<span class="nt-digit${timerText.length === text.length && timerText[k] !== ch ? ' is-roll' : ''}"><i>${ch}</i></span>`).join('');
+      timerText = text;
+    }
+    $('timerWrap').classList.toggle('is-urgent', sec <= 60);
+    if (left > 0) return;
+    stopSeat();
+    showAlert({ title: '시간 만료', msg: '좌석 선택 시간이 끝났습니다.\n다시 연습해주세요.' })
+      .then(() => showResult({ fail: true, title: '좌석 선택 시간이 끝났습니다', msg: '제한 시간 10분 안에 선택을 마치지 못했어요.' }));
+  };
+  tick();
+  seatTimer = setInterval(tick, 500);
+}
+function stopSeat() { seatActive = false; clearInterval(seatTimer); $('auLoad').hidden = true; }
+
+/* ─── 확대·이동 ─── */
+const ZOOM = { steps: [6, 12, 24], seatFrom: 6, ms: 300 };
+const view = { z: 1, x: 0, y: 0, fit: 1 };
+let anim = 0, miniShown = false, miniTimer = 0;
+const vp = $('planViewport'), map = $('planMap');
+const isMo = () => window.matchMedia('(max-width: 1024px)').matches;
+const PEEK_H = 168;   // 모바일 기본 — 시트가 아래에 이만큼 나와 있다
+let sheet = 'peek';   // peek | open | off
+let sheetAnim = false;
+const sheetPad = () => (isMo() && sheet !== 'off' ? PEEK_H : 0);
+function fitScale() { return Math.min(vp.clientWidth / VB.w, (vp.clientHeight - sheetPad()) / VB.h); }
+function setSheet(st) {
+  sheet = st;
+  const L = $('gradeLayer');
+  L.hidden = st === 'off';
+  L.classList.toggle('is-peek', st === 'peek'); L.classList.toggle('is-open', st === 'open');
+  vp.classList.toggle('sheet-on', st !== 'off');
+  $('zoomFit').classList.toggle('is-shrink', isMo() && st === 'off');
+  if (st !== 'open' && gpMode === 'count') { gpMode = 'list'; renderPanel(); }
+}
+function clampXY(z, x, y) {
+  const W = VB.w * z, H = VB.h * z, w = vp.clientWidth, h = vp.clientHeight;
+  x = W <= w ? (w - W) / 2 : Math.min(0, Math.max(w - W, x));
+  const ph = sheetPad();
+  y = H <= h - ph ? (h - ph - H) / 2 : Math.min(0, Math.max(h - ph - H, y));
+  return [x, y];
+}
+/* 확대·이동 중에는 좌석 1만 5천 개를 매 프레임 다시 그리지 않게 레이어로 고정해 두고, 멈추면 풀어서 선명하게 다시 그린다 */
+let movT = 0;
+function markMoving() {
+  if (!map.classList.contains('is-moving')) map.classList.add('is-moving');
+  clearTimeout(movT); movT = setTimeout(() => map.classList.remove('is-moving'), 180);
+}
+function paintView() {
+  markMoving();
+  map.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.z})`;
+  map.classList.toggle('is-seatlevel', view.z >= ZOOM.seatFrom);
+  const zoomed = view.z > view.fit + 0.001;
+  $('zoomOut').disabled = !zoomed;
+  $('zoomIn').disabled = view.z >= ZOOM.steps[ZOOM.steps.length - 1] - 0.001;
+  $('zoomFit').disabled = isMo() ? false : !zoomed;
+  // 모바일: 지도를 키우면 시트가 내려간다
+  if (isMo() && zoomed && sheet !== 'off' && !sheetAnim) { setSheet('off'); view.fit = fitScale(); }
+  $('zoomFit').classList.toggle('is-shrink', isMo() && sheet === 'off');
+  $('miniMap').classList.toggle('is-on', zoomed && miniShown);
+  if (!zoomed) return;
+  const mini = $('miniMap'), mv = $('miniView');
+  const sx = mini.clientWidth / VB.w, sy = mini.clientHeight / VB.h;
+  mv.style.left = (-view.x / view.z * sx) + 'px';
+  mv.style.top = (-view.y / view.z * sy) + 'px';
+  mv.style.width = Math.min(VB.w, vp.clientWidth / view.z) * sx + 'px';
+  mv.style.height = Math.min(VB.h, vp.clientHeight / view.z) * sy + 'px';
+}
+function flashMiniMap() { miniShown = true; clearTimeout(miniTimer); miniTimer = setTimeout(() => { miniShown = false; paintView(); }, 900); }
+function setView(z, x, y) { cancelAnimationFrame(anim); anim = 0; view.z = z; [view.x, view.y] = clampXY(z, x, y); paintView(); }
+const easeInOut = p => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+function animateTo(z, x, y) {
+  flashMiniMap();
+  const [tx, ty] = clampXY(z, x, y);
+  const from = { z: view.z, x: view.x, y: view.y };
+  const t0 = performance.now();
+  cancelAnimationFrame(anim);
+  const step = () => {
+    const k = easeInOut(Math.min(1, (performance.now() - t0) / ZOOM.ms));
+    view.z = from.z + (z - from.z) * k; view.x = from.x + (tx - from.x) * k; view.y = from.y + (ty - from.y) * k;
+    paintView();
+    if (k < 1) anim = requestAnimationFrame(step); else { anim = 0; syncSeats(); }
+  };
+  anim = requestAnimationFrame(step);
+}
+function resetView() { if (isMo()) setSheet('peek'); view.fit = fitScale(); setView(view.fit, 0, 0); }
+function centerOn(mx, my, z) { animateTo(z, vp.clientWidth / 2 - mx * z, vp.clientHeight / 2 - my * z); }
+function toMap(cx, cy) { const r = vp.getBoundingClientRect(); return [(cx - r.left - view.x) / view.z, (cy - r.top - view.y) / view.z]; }
+function zoomAround(z, cx, cy) {
+  z = Math.max(view.fit, Math.min(ZOOM.steps[ZOOM.steps.length - 1], z));
+  const r = vp.getBoundingClientRect(), px = cx - r.left, py = cy - r.top;
+  const mx = (px - view.x) / view.z, my = (py - view.y) / view.z;
+  setView(z, px - mx * z, py - my * z);
+}
+function zoomByButton(dir) {
+  const stops = [view.fit, ...ZOOM.steps.filter(s => s > view.fit)];
+  let z;
+  if (dir > 0) z = stops.find(s => s > view.z + 0.001) ?? stops[stops.length - 1];
+  else z = [...stops].reverse().find(s => s < view.z - 0.001) ?? view.fit;
+  const r = vp.getBoundingClientRect();
+  const [mx, my] = toMap(r.left + r.width / 2, r.top + r.height / 2);
+  centerOn(mx, my, z);
+}
+const pointers = new Map();
+let drag = null, pinch = null;
+vp.addEventListener('pointerdown', e => {
+  if (e.target.closest('button, .nt-grade-layer, .nt-minimap, .nt-price-tip')) return;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size === 1) drag = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y, moved: false };
+  else if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    pinch = { d0: Math.hypot(a.x - b.x, a.y - b.y), z0: view.z }; drag = null;
+  }
+});
+/* 포인터 이동은 프레임당 한 번만 반영한다 */
+let moveRaf = 0;
+vp.addEventListener('pointermove', e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (drag) {
+    drag.cx = e.clientX; drag.cy = e.clientY;
+    if (!drag.moved && Math.hypot(drag.cx - drag.sx, drag.cy - drag.sy) >= 5) drag.moved = true;
+  }
+  if (!moveRaf) moveRaf = requestAnimationFrame(applyMove);
+});
+function applyMove() {
+  moveRaf = 0;
+  if (pinch && pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    zoomAround(pinch.z0 * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d0, (a.x + b.x) / 2, (a.y + b.y) / 2);
+    flashMiniMap(); return;
+  }
+  if (!drag || !drag.moved) return;
+  setView(view.z, drag.vx + drag.cx - drag.sx, drag.vy + drag.cy - drag.sy); flashMiniMap();
+}
+function endPointer(e) {
+  const wasTap = drag && !drag.moved && pointers.size === 1;
+  pointers.delete(e.pointerId);
+  if (wasTap && e.type === 'pointerup') onTap(e);
+  if (!pointers.size) { drag = null; pinch = null; syncSeats(); }
+}
+vp.addEventListener('pointerup', endPointer);
+vp.addEventListener('pointercancel', endPointer);
+/* 휠도 프레임당 한 번 — 그 사이에 들어온 휠 양은 모아서 한 번에 */
+let wheelAcc = 0, wheelAt = [0, 0], wheelRaf = 0;
+vp.addEventListener('wheel', e => {
+  e.preventDefault();
+  wheelAcc += e.deltaY; wheelAt = [e.clientX, e.clientY];
+  if (wheelRaf) return;
+  wheelRaf = requestAnimationFrame(() => {
+    wheelRaf = 0;
+    zoomAround(view.z * Math.exp(-wheelAcc * 0.0018), wheelAt[0], wheelAt[1]);
+    wheelAcc = 0; flashMiniMap();
+  });
+}, { passive: false });
+function onTap(e) {
+  const target = document.elementFromPoint(e.clientX, e.clientY);
+  if (!target) return;
+  const seat = target.closest('.nt-seat-dot');
+  if (seat) { toggleSeat(seat); return; }
+  /* 구역을 누르면 그 자리를 중심에 두고 좌석이 보이는 배율까지 확대한다 */
+  if (view.z < ZOOM.seatFrom && target.closest('#blockLayer')) {
+    const [mx, my] = toMap(e.clientX, e.clientY);
+    centerOn(mx, my, ZOOM.steps[0]);
+  }
+}
+$('zoomIn').addEventListener('click', () => zoomByButton(1));
+$('zoomOut').addEventListener('click', () => zoomByButton(-1));
+$('zoomFit').addEventListener('click', () => {
+  if (!isMo()) { flashMiniMap(); animateTo(view.fit, 0, 0); return; }
+  // 모바일: 시트가 없으면 → 지도 작게 + 시트 올림 / 시트가 있으면 → 지도 크게 + 시트 내림
+  setSheet(sheet === 'off' ? 'peek' : 'off');
+  view.fit = fitScale(); sheetAnim = true;
+  animateTo(view.fit, 0, 0);
+  setTimeout(() => { sheetAnim = false; }, ZOOM.ms + 50);
+});
+$('miniMap').addEventListener('click', e => { const r = $('miniMap').getBoundingClientRect(); centerOn((e.clientX - r.left) / r.width * VB.w, (e.clientY - r.top) / r.height * VB.h, view.z); });
+window.addEventListener('resize', () => {
+  if (!seatActive || anim) return;
+  const wasFit = view.z <= view.fit + 0.001;
+  view.fit = fitScale();
+  if (wasFit) resetView(); else setView(Math.max(view.z, view.fit), view.x, view.y);
+});
+
+/* ─── 좌석 선택 — 희망 매수만큼 고른다 ─── */
+const picked = [];
+const seatName = s => { const b = blocks[s.bi]; return `${b.name} ${s.row}열 ${s.col}번`; };
+function renderPicked() {
+  $('pickedList').innerHTML = picked.map(i => {
+    const s = seats[i], g = GRADE[s.grade];
+    return `<li data-i="${i}"><i>${g.name}</i><b>${seatName(s)}</b><span>${won(g.price)}</span><button type="button" class="nt-picked-del" aria-label="선택 해제">✕</button></li>`;
+  }).join('');
+  $('pickedEmpty').hidden = picked.length > 0;
+  $('pickedEmpty').textContent = `좌석을 ${CFG.want}석 선택해주세요.`;
+  $('pickedNum').textContent = picked.length ? `${picked.length}/${CFG.want}` : '';
+  $('clearBtn').hidden = picked.length === 0;
+  $('doneBtn').disabled = picked.length !== CFG.want;
+  document.querySelector('.nt-seat-body').classList.toggle('has-picked', picked.length > 0);
+  if (!picked.length) document.querySelector('.nt-side').classList.remove('is-open');
+}
+function toggleSeat(dot) {
+  const i = Number(dot.dataset.i);
+  if (dot.classList.contains('is-sold')) return;
+  if (sold.has(i)) { closeSeat(i); showAlert({ title: '좌석 선택', msg: '이미 선점된 좌석입니다.' }); return; }
+  const at = picked.indexOf(i);
+  if (at >= 0) { picked.splice(at, 1); dot.classList.remove('is-picked'); dot.classList.add('is-open'); }
+  else {
+    if (picked.length >= CFG.want) { showHint(`희망 매수 ${CFG.want}매까지 선택할 수 있습니다`); return; }
+    picked.push(i); dot.classList.remove('is-open'); dot.classList.add('is-picked');
+  }
+  renderPicked();
+}
+function removePicked(i) {
+  const at = picked.indexOf(i); if (at < 0) return;
+  picked.splice(at, 1);
+  const d = seatEls[i]; if (d && !d.classList.contains('is-sold')) { d.classList.remove('is-picked'); d.classList.add('is-open'); }
+  renderPicked();
+}
+$('pickedList').addEventListener('click', e => { const li = e.target.closest('.nt-picked-del')?.closest('li'); if (li) removePicked(Number(li.dataset.i)); });
+$('clearBtn').addEventListener('click', () => picked.slice().forEach(removePicked));
+$('sheetArrow').addEventListener('click', () => document.querySelector('.nt-side').classList.toggle('is-open'));
+$('priceTip').addEventListener('click', e => { if (e.target.closest('.pt-x')) $('priceTip').hidden = true; });
+
+$('priceChip').addEventListener('click', () => {
+  const t = $('priceTip');
+  if (t.hidden) t.innerHTML = `<button type="button" class="pt-x" aria-label="닫기">${ICON_X}</button><ul>` + Object.entries(GRADE).filter(([k]) => gradeTotal[k]).map(([, g]) => `<li><i style="background:${g.color}"></i><span>${g.name}<b>${won(g.price)}</b></span></li>`).join('') + '</ul>';
+  t.hidden = !t.hidden;
+});
+$('blockLayer').addEventListener('pointerover', e => {
+  const el = e.target.closest('.blk'); if (!el) return;
+  const b = blocks[blockEls.indexOf(el)]; if (!b) return;
+  const left = +el.dataset.left;
+  showHint(`${GRADE[b.grade].name} ${b.name} · ${left > 0 ? `잔여 ${n(left)}석` : '매진'}`, 1500);
+});
+$('timerHelp').addEventListener('click', e => { e.stopPropagation(); $('timerTip').hidden = !$('timerTip').hidden; });
+document.addEventListener('click', e => { if (!$('timerTip').hidden && !e.target.closest('.nt-help-tip')) $('timerTip').hidden = true; });
+$('closeBtn').addEventListener('click', async () => {
+  const ok = await showConfirm({ title: '예매를 종료할까요?', msg: '상품예매가 완료되지 않았어요.' });
+  if (ok) location.reload();
+});
+let hintTimer = 0;
+function showHint(msg, ms = 2000) { const el = $('planHint'); el.textContent = msg; el.hidden = false; clearTimeout(hintTimer); hintTimer = setTimeout(() => { el.hidden = true; }, ms); }
+
+/* ─── 보안문자 ─── */
+const CAP_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+const CAP_BG = ['#2c4a1e', '#4a1f86', '#1f3f6e', '#5a2a1a', '#244a4a'];
+const CAP_FG = ['#8ff0b0', '#ffe28a', '#b9e3ff', '#ffc6a8', '#d6ffef'];
+let capText = '';
+function drawCaptcha() {
+  capText = Array.from({ length: 6 }, () => CAP_CHARS[Math.floor(Math.random() * CAP_CHARS.length)]).join('');
+  const cv = $('capCanvas'), g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  const k = Math.floor(Math.random() * CAP_BG.length);
+  g.fillStyle = CAP_BG[k]; g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * .5})`; g.fillRect(Math.random() * W, Math.random() * H, 2, 2); }
+  g.font = '600 52px "Courier New", monospace'; g.textBaseline = 'middle'; g.fillStyle = CAP_FG[k];
+  const step = 58, x0 = (W - step * 6) / 2 + 12;
+  for (let i = 0; i < 6; i++) {
+    g.save(); g.translate(x0 + i * step, H / 2 + (Math.random() * 10 - 5)); g.rotate((Math.random() - .5) * .25);
+    g.fillText(capText[i], 0, 0); g.restore();
+  }
+  g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(0, H * Math.random()); g.bezierCurveTo(W * .3, H * Math.random(), W * .7, H * Math.random(), W, H * Math.random()); g.stroke();
+}
+function openNotice() { $('noticeDim').hidden = false; $('noticeBox').hidden = false; $('noticeOk').focus({ preventScroll: true }); }
+function closeNotice() { if ($('noticeBox').hidden) return; $('noticeDim').hidden = true; $('noticeBox').hidden = true; if (seatActive) openCaptcha(); }
+$('noticeOk').addEventListener('click', closeNotice);
+function openCaptcha() {
+  $('capDim').hidden = false; $('capBox').hidden = false;
+  $('capInput').value = ''; $('capErr').textContent = ''; $('capDone').disabled = true;
+  drawCaptcha();
+  // 뜨자마자 바로 칠 수 있게 — 화면 전환·확대 애니메이션에 포커스를 뺏기지 않도록 몇 번 다시 잡는다
+  const grab = () => { if (!$('capBox').hidden && document.activeElement !== $('capInput')) $('capInput').focus({ preventScroll: true }); };
+  $('capInput').focus({ preventScroll: true });
+  [0, 60, 200, 450].forEach(ms => setTimeout(grab, ms));
+}
+/* 보안문자 창이 떠 있는 동안 영문을 치면 입력칸이 포커스를 잃었어도 그대로 들어간다 */
+document.addEventListener('keydown', e => {
+  if ($('capBox').hidden || e.target === $('capInput') || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (!/^[a-zA-Z]$/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Enter') return;
+  e.preventDefault();
+  const el = $('capInput'); el.focus({ preventScroll: true });
+  if (e.key === 'Enter') { $('capBox').requestSubmit ? $('capBox').requestSubmit() : $('capDone').click(); return; }
+  el.value = e.key === 'Backspace' ? el.value.slice(0, -1) : (el.value + e.key).slice(0, 6);
+  el.dispatchEvent(new Event('input'));
+});
+/* 영문만 받아 대문자로 바꿔 넣고, 정확히 6자일 때만 입력완료가 켜진다 */
+$('capInput').addEventListener('input', () => {
+  const el = $('capInput'), raw = el.value, letters = raw.replace(/[^a-zA-Z]/g, '');
+  el.value = letters.toUpperCase();
+  $('capErr').textContent = letters.length !== raw.length ? '영문 글자만 입력 가능합니다.' : '';
+  $('capDone').disabled = el.value.length !== 6;
+});
+$('capRefresh').addEventListener('click', () => { drawCaptcha(); $('capInput').value = ''; $('capErr').textContent = ''; $('capDone').disabled = true; $('capInput').focus(); });
+$('capSound').addEventListener('click', () => { $('capErr').textContent = '음성 안내는 연습 화면에서 제공하지 않습니다'; });
+/* 틀려도 이미지를 새로 뽑지 않고 입력값도 지우지 않는다 */
+$('capBox').addEventListener('submit', e => {
+  e.preventDefault();
+  if ($('capDone').disabled) return;
+  if ($('capInput').value !== capText) {
+    T.capFails = (T.capFails || 0) + 1;
+    $('capErr').textContent = '입력한 문자를 다시 확인해주세요';
+    return;
+  }
+  T.captchaEnd = now();
+  $('capDim').hidden = true; $('capBox').hidden = true;
+});
+
+/* ─── 선택 완료 → 예매확인 ─── */
+let cfClicks = 0, cfTimer = 0;
+$('doneBtn').addEventListener('click', () => {
+  if (picked.length !== CFG.want) return;
+  T.seatDone = now();
+  const tickets = picked.reduce((a, i) => a + GRADE[seats[i].grade].price, 0);
+  const fee = FEE * picked.length;
+  $('cfList').innerHTML = `
+    <div><dt>경기</dt><dd>${ST.game}</dd></div>
+    <div><dt>일시</dt><dd>2026.10.20(화) 6:30 PM</dd></div>
+    <div><dt>장소</dt><dd>${ST.venue}</dd></div>
+    <div><dt>좌석</dt><dd>${picked.map(i => `${GRADE[seats[i].grade].name} ${seatName(seats[i])}`).join('<br>')}</dd></div>
+    <div><dt>티켓금액</dt><dd>${won(tickets)}</dd></div>
+    <div><dt>예매수수료</dt><dd>${won(fee)} (${picked.length}매)</dd></div>`;
+  $('cfTotal').textContent = won(tickets + fee);
+  cfClicks = 0; $('cfBtn').textContent = '예매확인';
+  $('capDim').hidden = false; $('cfBox').hidden = false;
+});
+$('cfPrev').addEventListener('click', () => { if (cfClicks) return; $('capDim').hidden = true; $('cfBox').hidden = true; });
+/* 예매확인 — 처음 누른 것만 처리하고, 처리 중 추가 클릭은 무시한다 */
+$('cfBtn').addEventListener('click', () => {
+  if ($('cfBox').hidden || !seatActive) return;
+  cfClicks++;
+  if (cfClicks !== 1) return;
+  T.confirm = now();
+  $('cfBtn').textContent = '예매 처리 중…';
+  cfTimer = setTimeout(() => { stopSeat(); $('cfBox').hidden = true; showResult({ fail: false }); }, 1400);
+});
+function finishSoldOut() {
+  stopSeat();
+  $('capBox').hidden = true; $('cfBox').hidden = true; $('capDim').hidden = true;
+  showResult({ fail: true, soldout: true, title: '모든 좌석이 소진되었습니다', msg: `오픈 후 ${((now() - T.open) / 1000).toFixed(2)}초 만에 매진됐어요` });
+}
+
+/* ─── 결과 ─── */
+function showResult(r) {
+  if (r.fail) { const rec = loadRec(); rec.fails++; saveRec(rec); }
+  const end = now();
+  const segs = [
+    ['반응', T.click, T.open],
+    ['대기열', T.queueEnd ?? (T.click != null ? end : null), T.click],
+    ['보안문자', T.queueEnd != null && Q.entered ? (T.captchaEnd ?? end) : null, T.queueEnd],
+    ['좌석', T.captchaEnd != null ? (T.seatDone ?? end) : null, T.captchaEnd],
+    ['예매확인', T.confirm, T.seatDone],
+  ].map(([nm, a, b]) => [nm, a != null && b != null ? Math.max(0, a - b) : null])
+    .filter(s => s[1] != null && !(s[0] === '대기열' && !T.firstRank) && !(T.quick && (s[0] === '반응' || s[0] === '대기열')));
+  const total = segs.reduce((a, s) => a + s[1], 0);
+  const longest = segs.reduce((m, s) => (s[1] > m[1] ? s : m), ['', -1]);
+  const meta = T.quick ? `보안문자부터 연습 · ${n(T.firstRank)}번째로 입장${T.autoAssigned ? ' · 자동배정' : ''}`
+    : `반응 ${T.reactionMs}ms(${judge(T.reactionMs)}) · ` + (T.firstRank ? `${n(CFG.crowd)}명 중 ${n(T.firstRank)}번에서 출발` : '대기열 진입 전') + (T.autoAssigned ? ' · 자동배정' : '');
+  const extras = [T.preClicks ? `오픈 전 연타 ${T.preClicks}회` : '',
+    T.click != null ? `활성화 후 중복 클릭 ${T.postClicks || 0}회` : '',
+    T.reclicks ? `재요청 ${T.reclicks}회 · 첫 클릭 ${(T.reactionMs / 1000).toFixed(2)}초 → 마지막 클릭 ${((T.lastClick - T.open) / 1000).toFixed(2)}초` : '',T.netWaitMs ? `몰림 응답 대기 ${(T.netWaitMs / 1000).toFixed(2)}초` : '', T.netErrors ? `접속 오류 ${T.netErrors}회` : '', T.capFails ? `보안문자 오답 ${T.capFails}회` : ''].filter(Boolean).join(' · ');
+  const grade = ms => { const v = ms / 1000; return v <= 7 ? 'S+' : v <= 10 ? 'S' : v <= 14 ? 'A' : v <= 20 ? 'B' : 'C'; };
+  const sec = ms => (ms / 1000).toFixed(2) + '초';
+  const rec = loadRec(), last10 = rec.reactions.slice(-10);
+  const best = rec.reactions.length ? Math.min(...rec.reactions) + 'ms' : '–';
+  const avg = last10.length ? Math.round(last10.reduce((x, y) => x + y, 0) / last10.length) + 'ms' : '–';
+  const stack = segs.map((x, k) => `<i class="rs-c${k + 1}" style="width:${(x[1] / total * 100).toFixed(1)}%"></i>`).join('');
+  const list = segs.map((x, k) => `<div class="rs-li${x === longest && segs.length > 1 ? ' top' : ''}"><i class="rs-c${k + 1}"></i><span>${x[0]}</span>${x === longest && segs.length > 1 ? '<em>가장 오래</em>' : ''}<b>${sec(x[1])}</b></div>`).join('');
+  $('resultCard').innerHTML = `
+    <div class="rs-hero${r.fail ? ' bad' : ''}">
+      <span class="rs-tag">${r.fail ? (r.soldout ? 'SOLD OUT' : 'FAILED') : 'COMPLETE'}</span>
+      <div class="rs-head">
+        ${r.fail ? `<p class="rs-word">${r.soldout ? '매진' : '실패'}</p>` : `<p class="rs-big">${(total / 1000).toFixed(3)}<small>초</small></p><span class="rs-grade">${grade(total)}</span>`}
+      </div>
+      <p class="rs-desc">${r.fail ? `${r.title}\n${r.msg}` : '좌석을 잡았어요! 오픈부터 예매확인까지 걸린 시간이에요.'}</p>
+      <p class="rs-meta">${meta}</p>
+    </div>
+    <div class="rs-body">
+      ${segs.length ? `<p class="rs-label">구간별 시간<span>총 ${sec(total)}</span></p><div class="rs-stack">${stack}</div><div class="rs-list">${list}</div>` : ''}
+      ${extras ? `<p class="rs-extra">${extras}</p>` : ''}
+      <div class="rs-stats"><div class="rs-stat"><span>최고 반응</span><b>${best}</b></div><div class="rs-stat"><span>최근 10회 평균</span><b>${avg}</b></div><div class="rs-stat"><span>실패</span><b>${rec.fails}회</b></div></div>
+      <div class="rs-btns"><button type="button" class="ghost" id="toIntro">처음으로</button><button type="button" class="main" id="retryBtn2">다시 도전</button></div>
+    </div>`;
+  $('pkt-result-overlay').classList.add('visible');
+  $('toIntro').addEventListener('click', () => location.reload());
+  $('retryBtn2').addEventListener('click', () => { try { sessionStorage.setItem('nt_autostart', '1'); } catch (e) {} location.reload(); });
+}
+
+/* ─── 알림창 ─── */
+function openAlert({ title, msg, cancel, ok = '확인', no = '취소' }) {
+  return new Promise(res => {
+    $('pkt-alert-title').textContent = title; $('pkt-alert-msg').textContent = msg;
+    $('pkt-alert-confirm').textContent = ok; $('pkt-alert-cancel').textContent = no;
+    $('pkt-alert-cancel').hidden = !cancel;
+    $('pkt-alert-box').classList.toggle('is-bad', /실패|만료|선점|못했/.test(title));
+    const ov = $('pkt-alert-overlay'); ov.classList.add('show');
+    const done = v => { ov.classList.remove('show'); $('pkt-alert-confirm').onclick = $('pkt-alert-cancel').onclick = null; document.removeEventListener('keydown', key); res(v); };
+    const key = e => { if (e.key === 'Enter') { e.preventDefault(); done(true); } };
+    $('pkt-alert-confirm').onclick = () => done(true);
+    $('pkt-alert-cancel').onclick = () => done(false);
+    document.addEventListener('keydown', key);
+    $('pkt-alert-confirm').focus();
+  });
+}
+const showAlert = o => openAlert({ ...o, cancel: false });
+const showConfirm = o => openAlert({ ...o, cancel: true });
+
+/* ─── 보안문자부터 연습 — 5,000번 이하 무작위 순번으로 입장한 상태에서 시작 ─── */
+const QUICK_RANK = [1, 5000];
+$('quickBtn').addEventListener('click', () => {
+  if (phaseIntro !== 'idle') return;
+  phaseIntro = 'quick';
+  $('startDim').hidden = true; $('quickBtn').hidden = true;
+  const rank = QUICK_RANK[0] + Math.floor(Math.random() * (QUICK_RANK[1] - QUICK_RANK[0]));
+  $('readyRank').innerHTML = `대기 순번은 <b>5,000번 이하에서 무작위</b>로 정해져요.<br>이번 순번 <b>${n(rank)}번</b> — 그 앞사람들이 이미 산 만큼 좌석이 줄어 있어요.`;
+  let c = 3; $('readyNum').textContent = c; $('readyDim').hidden = false;
+  const iv = setInterval(() => {
+    c--;
+    if (c > 0) { $('readyNum').textContent = c; return; }
+    clearInterval(iv); $('readyDim').hidden = true;
+    const t = now();
+    T.quick = true; T.firstRank = rank; T.open = t; T.click = t; T.reactionMs = 0;
+    Q.rank = rank; Q.entered = true; Q.enterAt = t; Q.seatsAtEntry = Math.max(0, Math.round(seatsAfter(rank - 1)));
+    enterSeat();
+  }, 1000);
+});
+
+/* ─── 관람 구역 선택 · 자동배정 — 실제 예매 화면과 같은 흐름 ───
+   구역(등급) 선택 → [자동 배정받기 | 직접 좌석 선택하기]
+   자동: 매수 선택 → 배정 중 → (성공) 좌석 n개 배정 → 확인 완료 → 예매확인
+                              (실패) 계속 시도(n/3) | 다른 구역 선택하기 */
+let rowsOf = null;
+function buildRows() {
+  rowsOf = new Map();
+  seats.forEach((s, i) => { const k = `${s.bi}-${s.row}`; (rowsOf.get(k) || rowsOf.set(k, []).get(k)).push(i); });
+  rowsOf.forEach(a => a.sort((x, y) => seats[x].col - seats[y].col));
+}
+const isFree = i => !sold.has(i) && !seatEls[i].classList.contains('is-sold') && !picked.includes(i);
+/* 그 구역에서 지금 비어 있는 '붙은 k석' 후보 전부 — 실제처럼 순서를 섞어서 차례로 시도한다 */
+function allRuns(grade, k) {
+  if (!rowsOf) buildRows();
+  const out = [];
+  rowsOf.forEach(a => {
+    if (zoneOf[seats[a[0]].bi] !== grade) return;
+    for (let x = 0; x + k <= a.length; x++) {
+      let ok = true;
+      for (let y = 0; y < k; y++) { const i = a[x + y]; if (!isFree(i) || (y && seats[i].col !== seats[a[x + y - 1]].col + 1)) { ok = false; break; } }
+      if (ok) out.push(a.slice(x, x + k));
+    }
+  });
+  for (let x = out.length - 1; x > 0; x--) { const y = Math.floor(Math.random() * (x + 1)); [out[x], out[y]] = [out[y], out[x]]; }
+  return out;
+}
+/* 시트 손잡이·제목을 위로 끌면 펼치고, 아래로 끌면 접는다 */
+(() => {
+  let y0 = null, moved = false;
+  $('gradeLayer').addEventListener('pointerdown', e => { if (e.target.closest('.gp-head, .as-head, .gp-x')) { y0 = e.clientY; moved = false; } });
+  window.addEventListener('pointermove', e => { if (y0 !== null && Math.abs(e.clientY - y0) > 6) moved = true; });
+  window.addEventListener('pointerup', e => {
+    if (y0 === null) return;
+    const dy = e.clientY - y0; y0 = null;
+    if (!moved) return;
+    if (dy < -30) setSheet('open'); else if (dy > 30) setSheet('peek');
+    sheetDragged = true; setTimeout(() => { sheetDragged = false; }, 0);
+  });
+})();
+let sheetDragged = false;
+['gradeLayer', 'remainSide'].forEach(id => $(id).addEventListener('click', e => {
+  if (sheetDragged) return;
+  const z = e.target.closest('[data-zone]');
+  if (z) { selGrade = z.dataset.zone; renderPanel(); if (isMo() && sheet !== 'open') setSheet('open'); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a || a.disabled) return;
+  const act = a.dataset.act;
+  if (act === 'close') { setSheet(sheet === 'open' ? 'peek' : 'open'); return; }
+  if (act === 'back') { gpMode = 'list'; renderPanel(); return; }
+  if (act === 'minus' || act === 'plus') { auCount = Math.min(MAX_PICK, Math.max(0, auCount + (act === 'plus' ? 1 : -1))); renderPanel(); return; }
+  if (act === 'confirm') { finishResult(); return; }
+  if (!$('capBox').hidden) { showHint('보안문자를 먼저 입력해주세요'); return; }
+  if (act === 'go') { runAuto(); return; }
+  if (!selGrade) return;
+  if (act === 'direct') { directSelect(selGrade); }
+  else openCount(selGrade);
+}));
+/* 직접 좌석 선택하기 — 그 구역에서 남은 자리가 가장 많은 블록으로 이동 */
+function directSelect(grade) {
+  let bi = -1;
+  blocks.forEach((b, i) => { if (zoneOf[i] === grade && blockLeft[i] > 0 && (bi < 0 || blockLeft[i] > blockLeft[bi])) bi = i; });
+  if (bi < 0) return;
+  const b = blocks[bi], t = TIER[b.tier], mid = (b.a0 + b.a1) / 2;
+  const [x, y] = P((t.rin(mid) + t.rout(mid)) / 2, mid);
+  centerOn(x, y, ZOOM.steps[0]);
+  showHint(`${zoneBy(grade).name} ${b.name}로 이동했어요`);
+}
+const MAX_PICK = 4;   // 인당 최대 4매
+let auGrade = null, auCount = 2, auRetry = 0, auBusy = false;
+function openCount(grade) { auGrade = grade; auCount = 0; auRetry = 0; gpMode = 'count'; renderPanel(); }
+const wait = ms => new Promise(r => setTimeout(r, ms));
+/* 후보를 차례로 요청한다. 화면엔 비어 보여도 그 사이 다른 사람이 먼저 잡으면 실패하고 다음 후보로 — 남은 자리가 적을수록 자주 실패 */
+async function tryAssign(grade, k) {
+  if (FLOW_TEST) {
+    await wait(1200 + Math.random() * 800);
+    if (!seatActive) return null;
+    if (auRetry === 0 || Math.random() < 0.5) return null;   // 그 사이 다른 사람이 먼저 잡음
+    return allRuns(grade, k).find(r => r.every(isFree)) || null;
+  }
+  await wait(500 + Math.random() * 700);
+  const cands = allRuns(grade, k);
+  for (let a = 0; a < Math.min(3, cands.length); a++) {
+    await wait(600 + Math.random() * 700);
+    if (!seatActive) return null;
+    const run = cands[a];
+    if (!run.every(isFree)) continue;
+    const ratio = Math.max(0, zoneLeft[grade]) / zoneTotal[grade];
+    if (Math.random() < Math.min(0.6, 0.15 + (1 - ratio) * 0.5)) continue;
+    return run;
+  }
+  return null;
+}
+let auBottomT = 0;
+async function runAuto() {
+  if (auBusy || !seatActive) return;
+  auBusy = true; $('auLoad').hidden = false; $('auBottom').classList.remove('on');
+  clearTimeout(auBottomT); auBottomT = setTimeout(() => $('auBottom').classList.add('on'), 3000);
+  const run = await tryAssign(auGrade, auCount);
+  clearTimeout(auBottomT); $('auLoad').hidden = true; auBusy = false;
+  if (!seatActive) return;
+  if (run) {
+    picked.slice().forEach(removePicked);
+    CFG.want = auCount;   // 이번 예매 매수 (설정 저장값은 그대로)
+    run.forEach(i => { picked.push(i); seatEls[i].classList.remove('is-open'); seatEls[i].classList.add('is-picked'); });
+    renderPicked();
+    T.autoAssigned = true;
+    auResult = run; gpMode = 'result';
+    document.querySelector('.nt-seat-body').classList.add('au-result');
+    renderPanel(); if (isMo()) setSheet('open');
+    return;
+  }
+  auRetry++;
+  if (auRetry > 3) {
+    auRetry = 0;
+    await openAlert({ title: '자동 배정 가능한 좌석을 찾지 못했어요', msg: '다른 구역을 선택해 보세요' });
+    gpMode = 'list'; selGrade = null; renderPanel(); return;
+  }
+  const again = await openAlert({ title: '자동 배정 가능한 좌석을 찾지 못했어요', msg: '계속 시도하거나 다른 구역을 선택해 보세요.', cancel: true, ok: `계속 시도(${auRetry}/3)`, no: '다른 구역 선택하기' });
+  if (again) runAuto();
+  else { auRetry = 0; gpMode = 'list'; selGrade = null; renderPanel(); }
+}
+function finishResult() {
+  document.querySelector('.nt-seat-body').classList.remove('au-result');
+  gpMode = 'list'; selGrade = null; auResult = null; renderPanel();
+  if (seatActive) $('doneBtn').click();
+}
+
+/* ─── 연습 규칙 시트 ─── */
+document.querySelectorAll('[data-rule]').forEach(b => b.addEventListener('click', () => { $('ruleDim').hidden = false; $('ruleDim').querySelector('.in-card').scrollTop = 0; }));
+$('ruleClose').addEventListener('click', () => { $('ruleDim').hidden = true; });
+$('ruleDim').addEventListener('click', e => { if (e.target === $('ruleDim')) $('ruleDim').hidden = true; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('ruleDim').hidden = true; });
+
+/* ─── 시작 ─── */
+useStadium(CFG.stadium);
+paintCfg();
+$('recLine').textContent = recLine();
+buildPlan();   // 좌석은 미리 다 그려둔다. 좌석 화면 진입 때 멈칫하지 않게
+renderPicked();
+/* ─── 플로우 테스트판 — 예매하기를 누르면 바로 보안문자 → 좌석 ─── */
+if (FLOW_TEST) {
+  const flowEnter = () => {
+    phaseIntro = 'flow-in'; $('startDim').hidden = true;
+    const t = now();
+    T.quick = true; T.firstRank = 1; T.open = t; T.click = t; T.reactionMs = 0;
+    Q.rank = 1; Q.entered = true; Q.enterAt = t; Q.seatsAtEntry = SEATS;   // 전석 빈 상태에서 시작
+    enterSeat();
+  };
+  // 다른 사람들은 천천히(초당 3석) 산다 — 구역 숫자가 줄어드는 것만 보이게
+  liveSeats = () => Q.entered ? Math.max(0, Q.seatsAtEntry - (now() - Q.enterAt) / 1000 * 3) : SEATS;
+  $('quickBtn').hidden = true; $('startDim').hidden = true;
+  phaseIntro = 'flow';
+  $('bookBtn').classList.remove('is-locked'); $('bookBtn').classList.add('is-open'); $('bookBtn').textContent = '예매하기';
+  $('bookBtn').addEventListener('pointerdown', e => { e.stopImmediatePropagation(); if (phaseIntro === 'flow') flowEnter(); }, true);
+  $('startBtn').addEventListener('click', e => { e.stopImmediatePropagation(); flowEnter(); }, true);
+}
+try { if (sessionStorage.getItem('nt_autostart')) { sessionStorage.removeItem('nt_autostart'); $('startBtn').click(); } } catch (e) {}
+})();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>잠실 티켓팅 연습</title>
+<title>야구 티켓팅 연습</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500;700&display=swap">
 <style>
@@ -25,7 +25,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 /* ═══ 0) 예매 대기 화면 — 제목 · 포스터 · 경기명 · 버튼을 가운데 세로로 ═══ */
 #screen-intro.is-active { display: flex; flex-direction: column; align-items: center; min-height: 100dvh; padding: 0 20px 40px;
   background: linear-gradient(180deg, #eaedf5 0%, #f3f4f8 32%, #fff 52%, #fff 100%); }
-.in-title { margin-top: 13vh; font-size: 20px; font-weight: 700; color: #1b1c1f; text-align: center; letter-spacing: -.3px }
+.in-title { margin-top: max(13vh, 76px); font-size: 20px; font-weight: 700; color: #1b1c1f; text-align: center; letter-spacing: -.3px }
 .in-poster { margin-top: 44px; width: 190px; height: 254px; border-radius: 18px; border: 3px solid #fff; overflow: hidden; position: relative; color: #fff;
   box-shadow: 0 10px 24px rgba(27, 28, 31, .14);
   background: radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.28), transparent 60%), linear-gradient(180deg, #2b3a63 0%, #1c2a4a 55%, #10301f 100%); }
@@ -41,7 +41,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 .in-btn.is-open { background: linear-gradient(180deg, #3d8bff 0%, #2b74ec 100%); color: #fff; box-shadow: 0 10px 24px rgba(49,130,246,.35) }
 .in-btn.is-locked { cursor: default }
 .in-note { margin-top: 12px; font-size: 11.5px; color: #b0b4bf; text-align: center }
-@media (max-width: 600px) { .in-title { margin-top: 10vh } .in-poster { margin-top: 34px } .in-btn { margin-top: 36px } }
+@media (max-width: 600px) { .in-title { margin-top: max(10vh, 72px) } .in-poster { margin-top: 34px } .in-btn { margin-top: 36px } }
 
 /* 시작 설정 — 토스식 바텀시트 (PC는 가운데) */
 .in-dim { position: fixed; inset: 0; z-index: 20; background: rgba(12, 18, 32, .42); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 20px; animation: fade .2s ease }
@@ -75,6 +75,29 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 .in-start { margin-top: 14px; width: 100%; height: 56px; border-radius: 16px; background: linear-gradient(180deg, #3d8bff 0%, #2b74ec 100%); color: #fff; font-size: 17px; font-weight: 600; box-shadow: 0 8px 20px rgba(49,130,246,.35); transition: filter .15s }
 .in-start:active { filter: brightness(.94) }
 .in-cancel { display: block; width: 100%; margin-top: 6px; height: 48px; border-radius: 14px; color: var(--g600); font-size: 15px; font-weight: 500 }
+
+/* 보안문자부터 연습 */
+.in-quick { position: fixed; top: calc(14px + env(safe-area-inset-top, 0px)); right: 16px; z-index: 25; height: 38px; padding: 0 14px; border-radius: 99px; background: #fff; color: #3182f6; font-size: 13.5px; font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(49,130,246,.18), 0 6px 16px rgba(25,31,40,.12) }
+.in-quick:hover { background: #f4f8ff }
+#readyDim { z-index: 40 }
+.rd-card { width: min(320px, 100%); padding: 30px 24px 26px; border-radius: 26px; background: #fff; text-align: center; animation: pop .2s cubic-bezier(.2,.8,.2,1);
+  box-shadow: 0 0 0 1px rgba(49,130,246,.06), 0 28px 70px rgba(12,18,32,.28), 0 6px 18px rgba(12,18,32,.08) }
+.rd-title { font-size: 22px; font-weight: 800; color: #191f28 }
+.rd-sub { margin-top: 6px; font-size: 14.5px; color: #6b7684; line-height: 1.5 }
+.rd-num { display: grid; place-items: center; width: 96px; height: 96px; margin: 22px auto 0; border-radius: 50%; font-size: 48px; font-weight: 800; color: #fff;
+  background: linear-gradient(160deg, #4c94ff, #1b5fd0); box-shadow: 0 12px 28px rgba(49,130,246,.4); font-variant-numeric: tabular-nums }
+.rd-rank { margin-top: 18px; padding: 12px 14px; border-radius: 12px; background: #f2f4f6; font-size: 13px; color: #4e5968; line-height: 1.6 }
+.rd-rank b { color: #191f28 }
+
+/* 자동배정 */
+.nt-chips { position: absolute; left: 16px; bottom: 16px; display: flex; gap: 8px; z-index: 2 }
+.nt-chips .nt-grade-chip { position: static }
+.nt-auto-chip { height: 36px; padding: 0 14px; border-radius: 9999px; background: #3182f6; color: #fff; font-size: 13px; font-weight: 700; box-shadow: 0 6px 14px rgba(49,130,246,.35) }
+#autoDim { z-index: 30 }
+.cf-radio.is-out { opacity: .4; pointer-events: none }
+.cf-radio small { margin-left: auto; margin-right: 4px; font-size: 12px; font-weight: 600; color: #8b95a1; font-variant-numeric: tabular-nums }
+.au-note { margin-top: 14px; font-size: 13px; color: #8b95a1; line-height: 1.55 }
 
 /* 연습 규칙 — 어떻게 만들었는지 보여주는 시트 */
 .in-rule { margin-top: 10px; padding: 6px 10px; font-size: 13px; font-weight: 600; color: var(--g600); border-radius: 8px }
@@ -213,6 +236,25 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 .rm-entered { display: flex; align-items: baseline; gap: 6px; margin: -2px 0 8px; padding: 8px 10px; border-radius: 10px; background: #f2f4f6; font-size: 12.5px; color: #4e5968 }
 .rm-entered b { font-size: 14px; font-weight: 800; color: #3182f6; font-variant-numeric: tabular-nums }
 .rm-entered span { margin-left: auto; font-size: 11.5px; color: #8b95a1 }
+.gl-tabs { display: flex; gap: 4px; margin-bottom: 6px; padding: 3px; border-radius: 10px; background: #f2f4f6 }
+.gl-tabs button { flex: 1; height: 30px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8b95a1 }
+.gl-tabs button.on { background: #fff; color: #191f28; box-shadow: 0 1px 3px rgba(25,31,40,.1) }
+.gl-item { width: 100%; display: grid; grid-template-columns: 10px 1fr auto auto; align-items: center; gap: 8px; padding: 9px 8px; margin: 0 -8px; border-radius: 10px; text-align: left; font-size: 13.5px; white-space: nowrap; width: calc(100% + 16px) }
+.gl-item:hover { background: #f5f7fa }
+.gl-item.sel { background: #e8f3ff; box-shadow: inset 0 0 0 1.5px #3182f6 }
+.gl-item.is-out { cursor: default; opacity: .55 }
+.gl-item i { width: 10px; height: 10px; border-radius: 3px }
+.gl-item span { color: #333d4b; font-weight: 600 }
+.gl-item small { font-size: 11.5px; color: #8b95a1; font-variant-numeric: tabular-nums }
+.gl-item b { min-width: 56px; text-align: right; font-weight: 700; color: #191f28; font-variant-numeric: tabular-nums }
+.gl-item b.low { color: #e8590c } .gl-item b.out { color: #b0b8c1; font-weight: 600 }
+.rm-list li { display: block; padding: 0 }
+.gl-acts { display: grid; gap: 6px; margin-top: 10px }
+.gl-acts button { height: 46px; border-radius: 12px; font-size: 14.5px; font-weight: 700 }
+.gl-auto { background: linear-gradient(180deg, #3d8bff, #2b74ec); color: #fff; box-shadow: 0 6px 16px rgba(49,130,246,.3) }
+.gl-direct { background: #f2f4f6; color: #4e5968 }
+.gl-guide { margin-top: 8px; font-size: 12px; color: #8b95a1; text-align: center }
+.nt-grade-layer { max-height: min(70vh, 560px); overflow-y: auto; width: min(320px, calc(100vw - 32px)) }
 .nt-remain { display: none; padding: 20px 24px 14px; border-bottom: 8px solid #f2f4f6 }
 .blk { transition: fill-opacity .4s }
 .nt-zoom, .nt-zoom-fit { position: absolute; right: 16px; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, .12); overflow: hidden; }
@@ -372,20 +414,168 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
   .nt-side-head { padding: 24px 24px 16px }
   .nt-done { margin: 0 24px 24px }
 }
+
+/* ═══ 관람 구역 패널 — 놀 onestop CSS 수치 (1rem = 10px) ═══ */
+.gp { display: flex; flex-direction: column; height: 100%; min-height: 0; background: #fff }
+.gp-head { position: relative; flex-shrink: 0; padding: 24px 20px }
+.gp-head h3 { font-size: 24px; font-weight: 700; line-height: 1.3; color: #1b1c1f }
+.gp-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 12px }
+.gp-list { display: flex; flex-direction: column }
+.gp-item { display: flex; flex-direction: column; align-items: stretch; width: 100%; padding: 20px 16px; background: transparent; border: 1px solid transparent; border-radius: 12px; text-align: left }
+.gp-item.sel { border-color: #b2baff; box-shadow: 0 0 6px 0 rgba(0,0,0,.12) }
+.gp-item:active { background: #f2f3f7 }
+@media (hover: hover) and (pointer: fine) { .gp-item:hover { background: #f2f3f7 } }
+.gp-row { display: flex; align-items: center; width: 100% }
+.gp-row i { flex-shrink: 0; width: 14px; height: 14px; margin-right: 10px; border-radius: 50% }
+.gp-row b { flex: 1; min-width: 0; font-size: 18px; font-weight: 600; line-height: 22px; color: #6e6f73; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.gp-row em { flex-shrink: 0; font-style: normal; font-size: 18px; font-weight: 700; color: #6e6f73; text-align: right; font-variant-numeric: tabular-nums }
+.gp-note { display: flex; align-items: flex-start; gap: 2px; width: 100%; margin-top: 12px; padding-left: 24px }
+.gp-note svg { flex-shrink: 0; width: 20px; height: 20px; margin-top: 2px; color: #6e6f73 }
+.gp-note span { flex: 1; min-width: 0; word-break: keep-all; font-size: 16px; line-height: 24px; color: #6e6f73 }
+.gp-foot { display: flex; flex-shrink: 0; gap: 10px; padding: 24px; background: #fff; border-top: 1px solid #e9eaef; box-shadow: 0 0 8px 0 rgba(0,0,0,.1) }
+.gp-foot.flat { border-top-color: transparent; box-shadow: none }
+.gp-foot > button { flex: 1 }
+.ent { display: block; width: 100%; padding: 0 8px; background: #fff; border: 1px solid #ddd; border-radius: 16px; font-size: 20px; font-weight: 700; line-height: 58px; white-space: nowrap; color: #1b1c1f }
+.ent.primary { border-color: #4154ff; background: #4154ff; color: #fff }
+.ent:disabled { border-color: #ddd; background: #ddd; color: #fff; cursor: default }
+.gp-x { display: none; position: absolute; top: 50%; right: 12px; width: 40px; height: 40px; transform: translateY(-50%); align-items: center; justify-content: center; color: #999 }
+.gp-x svg { width: 16px; height: 16px }
+/* 자동배정 — 매수 선택 · 결과 */
+.as-head { position: relative; flex-shrink: 0; display: flex; align-items: center; padding: 12px }
+.as-back { flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; color: #1b1c1f }
+.as-back svg { width: 22px; height: 22px }
+.as-head h3 { display: flex; align-items: center; min-height: 50px; font-size: 20px; font-weight: 700; color: #1b1c1f; line-height: 1.3 }
+.as-body { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 20px }
+.ac-card { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 21px 23px; border: 1px solid #e9eaef; border-radius: 20px; box-shadow: 0 0 8px 0 rgba(0,0,0,.2) }
+.ac-info { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0 }
+.ac-name { display: flex; align-items: center; gap: 6px; font-size: 18px; font-weight: 600; line-height: 22px; color: #6e6f73 }
+.ac-name i { flex-shrink: 0; width: 12px; height: 12px; border-radius: 50% }
+.ac-price { padding-bottom: 4px; font-size: 20px; font-weight: 700; line-height: 24px; color: #1b1c1f }
+.ac-step { display: flex; align-items: center; flex-shrink: 0; width: 116px; background: #f7f8fb; border-radius: 16px; overflow: hidden }
+.ac-step button { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 38px; min-height: 48px; color: #1b1c1f }
+.ac-step button:disabled { opacity: .3; cursor: default }
+.ac-step svg { width: 16px; height: 16px }
+.ac-step output { flex: 1; min-width: 0; text-align: center; font-size: 18px; font-weight: 700; color: #1b1c1f; font-variant-numeric: tabular-nums }
+.ar-card { display: flex; flex-direction: column; gap: 4px; padding: 16px 24px; background: #f7f8fb; border-radius: 20px }
+.ar-msg { padding: 12px 0; font-size: 18px; font-weight: 600; line-height: 22px; color: #1b1c1f }
+.ar-div { height: 1px; background: rgba(0,0,0,.05) }
+.ar-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0 }
+.ar-info { display: flex; flex-direction: column; gap: 8px; min-width: 0 }
+.ar-info b { font-size: 18px; font-weight: 600; line-height: 22px; color: #1b1c1f }
+.ar-info span { font-size: 14px; line-height: 17px; color: #6e6f73 }
+.ar-item strong { flex-shrink: 0; font-size: 18px; font-weight: 700; line-height: 22px; color: #1b1c1f }
+/* 배정 중 — 화면 전체를 흰 화면으로 덮는다 */
+.au-load { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; background: #fff }
+.au-center { flex: 1; display: flex; align-items: center; justify-content: center }
+.au-content { display: flex; flex-direction: column; align-items: center; gap: 33px }
+.au-text { font-size: 18px; font-weight: 700; line-height: 27px; color: #6e6f73; text-align: center; white-space: pre-line }
+.au-bottom { flex-shrink: 0; padding: 0 20px calc(34px + env(safe-area-inset-bottom, 0px)); text-align: center; visibility: hidden; opacity: 0; transition: opacity .3s ease, visibility .3s ease }
+.au-bottom.on { visibility: visible; opacity: 1 }
+.au-desc { font-size: 13px; line-height: 16px; color: #6e6f73 }
+/* 팝업 — 놀 다이얼로그 (왼쪽 정렬) */
+#pkt-alert-overlay { background: rgba(0,0,0,.4); backdrop-filter: none; -webkit-backdrop-filter: none }
+#pkt-alert-box { max-width: 360px; padding: 24px 20px 20px; border-radius: 24px; box-shadow: 0 8px 28px rgba(0,0,0,.16) }
+#pkt-alert-title { padding: 0; font-size: 19px; font-weight: 700; line-height: 1.45; color: #1b1c1f; text-align: left; letter-spacing: 0 }
+#pkt-alert-msg { padding: 0; margin-top: 10px; font-size: 14px; line-height: 1.5; color: #6e6f73; text-align: left }
+#pkt-alert-footer { margin-top: 20px; gap: 8px }
+.pkt-alert-btn { height: 42px; padding: 0 10px; border-radius: 12px; font-size: 14px; font-weight: 700; white-space: nowrap }
+#pkt-alert-cancel { background: #fff; color: #1b1c1f; box-shadow: inset 0 0 0 1px #ddd }
+#pkt-alert-confirm { background: #4154ff; color: #fff; box-shadow: none }
+/* 지도 왼쪽 아래 — 등급 별 가격 */
+.nt-chips { left: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)) }
+.nt-price-chip { display: flex; align-items: center; padding: 12px 12px 12px 16px; background: #fff; border-radius: 20px; box-shadow: 0 0 8px 0 rgba(0,0,0,.1); font-size: 14px; font-weight: 700; line-height: 16px; color: #666 }
+.nt-price-chip span { margin-left: 2px; color: #999; font-weight: 400 }
+.nt-price-tip { position: absolute; left: 12px; bottom: 66px; z-index: 4; width: 180px; background: #fff; border-radius: 12px; box-shadow: 0 0 8px 0 rgba(0,0,0,.16) }
+.nt-price-tip ul { max-height: 290px; padding: 20px 16px; overflow-y: auto }
+.nt-price-tip li { display: flex; align-items: center; gap: 0 10px; padding: 12px 0; border-top: 1px solid #f3f3f3 }
+.nt-price-tip li:first-child { padding-top: 0; border-top: 0 }
+.nt-price-tip li:last-child { padding-bottom: 0 }
+.nt-price-tip li i { flex-shrink: 0; width: 12px; height: 12px; border-radius: 50% }
+.nt-price-tip li span { display: flex; flex-direction: column; font-size: 12px; line-height: 12px; color: #1b1c1f }
+.nt-price-tip li b { margin-top: 2px; font-size: 13px; line-height: 13px; font-weight: 700 }
+.nt-price-tip .pt-x { position: absolute; top: 0; right: 0; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #999 }
+.nt-price-tip .pt-x svg { width: 14px; height: 14px }
+/* 모바일 — 아래에서 올라오는 시트 */
+.nt-grade-layer { left: 0; right: 0; bottom: 0; z-index: 5; width: auto; min-width: 0; max-height: 82%; padding: 0; border-radius: 30px 30px 0 0; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 10px 0 rgba(0,0,0,.3) }
+.nt-grade-layer > .gp { flex: 1; height: auto; min-height: 0 }
+.nt-grade-layer .gp { padding-top: 30px }
+.nt-grade-layer .gp-x { display: block; position: absolute; top: 0; left: 0; right: 0; width: 100%; height: 30px; transform: none }
+.nt-grade-layer .gp-x::after { content: ""; display: block; width: 48px; height: 4px; margin: 13px auto 0; border-radius: 2px; background: #dcdde2 }
+.nt-grade-layer .gp-head, .nt-grade-layer .as-head { position: static }
+.nt-grade-layer .gp-item.sel { border: 2px solid #1a5fd6; box-shadow: none; padding: 12.5px 15px }
+.nt-grade-layer .ent:not(.primary) { background: #f2f3f7; border-color: #e1e3e8 }
+.nt-grade-layer .as-back { display: none }
+.nt-grade-layer .as-head { padding: 10px 20px 14px }
+.nt-grade-layer .as-head h3 { min-height: 0; font-size: 16px; font-weight: 600; line-height: 19px }
+.nt-grade-layer .ac-price { display: none }
+.nt-grade-layer .gp-foot.flat { padding-top: 20px }
+.nt-grade-layer .gp-head { padding: 10px 20px 14px }
+.nt-grade-layer .gp-head h3 { font-size: 20px }
+.nt-grade-layer .gp-body { padding: 0 4px }
+.nt-grade-layer .gp-item { padding: 13.5px 16px }
+.nt-grade-layer .gp-row i { width: 12px; height: 12px; margin-right: 6px }
+.nt-grade-layer .gp-row b, .nt-grade-layer .gp-row em { font-size: 16px; line-height: 20px }
+.nt-grade-layer .gp-note { padding-left: 18px }
+.nt-grade-layer .gp-note svg { width: 18px; height: 18px; margin-top: 1px }
+.nt-grade-layer .gp-note span { font-size: 14px; line-height: 21px }
+.nt-grade-layer .gp-foot { padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)) }
+.nt-grade-layer .ent { font-size: 16px; line-height: 50px }
+.nt-grade-layer .as-body { padding: 4px 20px 12px }
+@media (max-width: 1024px) { .nt-seat-body.au-result .nt-side { display: none } }
+@media (min-width: 1025px) {
+  .nt-remain { flex: 1; min-height: 0; padding: 0; border-bottom: 0; flex-direction: column }
+  .nt-remain > .gp { width: 100% }
+  .nt-seat-body.has-picked .nt-remain { display: none }
+  .nt-seat-body.au-result .nt-remain { display: flex !important }
+  .nt-seat-body:not(.has-picked) .nt-side-head, .nt-seat-body:not(.has-picked) .nt-picked,
+  .nt-seat-body:not(.has-picked) .nt-picked-empty, .nt-seat-body:not(.has-picked) .nt-done,
+  .nt-seat-body.au-result .nt-side-head, .nt-seat-body.au-result .nt-picked,
+  .nt-seat-body.au-result .nt-picked-empty, .nt-seat-body.au-result .nt-done { display: none !important }
+  #gradeChip, .nt-grade-layer { display: none !important }
+  .au-bottom { padding-bottom: 24px }
+}
+@media (min-width: 1345px) { .nt-side { width: 480px } }
+/* 예매 안내 팝업 */
+#noticeDim { z-index: 12 }
+.nt-notice-pop { position: fixed; z-index: 13; top: 50%; left: 50%; width: min(420px, calc(100vw - 40px)); max-height: calc(100dvh - 40px); overflow-y: auto; transform: translate(-50%, -50%); padding: 24px 20px 20px; border-radius: 20px; background: #fff }
+.np-head { display: flex; align-items: center; justify-content: space-between; gap: 12px }
+.np-head h3 { font-size: 20px; font-weight: 700; color: #1b1c1f }
+.np-x { flex-shrink: 0; width: 32px; height: 32px; margin-right: -6px; display: flex; align-items: center; justify-content: center; color: #1b1c1f }
+.np-x svg { width: 18px; height: 18px }
+.np-body { margin-top: 18px; display: flex; flex-direction: column; gap: 22px; font-size: 15px; line-height: 1.55; color: #55565c; word-break: keep-all }
+.np-body .np-sub { margin-bottom: 8px; font-size: 16px; font-weight: 700; color: #3b3c40 }
+.np-ok { width: 100%; margin-top: 26px; height: 52px; border-radius: 16px; background: #4154ff; color: #fff; font-size: 16px; font-weight: 700 }
+/* 모바일 구역 시트 — 기본은 살짝, 펼치면 크게 */
+.zf-in { display: none }
+.nt-zoom-fit.is-shrink .zf-out { display: none }
+.nt-zoom-fit.is-shrink .zf-in { display: block }
+@media (max-width: 1024px) {
+  #gradeChip { display: none }
+  .nt-grade-layer { max-height: none; transition: height .25s ease }
+  .nt-grade-layer.is-peek { height: 168px }
+  .nt-grade-layer.is-open { height: 78% }
+  .nt-grade-layer.is-peek .gp-body { overflow: hidden }
+  .nt-grade-layer.is-peek .gp-foot { display: none }
+  .nt-plan.sheet-on .nt-zoom-fit { bottom: 180px }
+  .nt-plan.sheet-on .nt-chips { bottom: 180px }
+  .nt-plan.sheet-on .nt-price-tip { bottom: 234px }
+  .nt-grade-layer .gp-head, .nt-grade-layer .as-head, .nt-grade-layer .gp-x { touch-action: none }
+}
 </style>
 </head>
 <body>
 
 <!-- 0) 예매 대기 화면 -->
 <section class="nt-screen is-active" id="screen-intro">
+  <button type="button" class="in-quick" id="quickBtn">보안문자부터 연습 ›</button>
   <h1 class="in-title">예매 준비가 완료됐어요</h1>
   <div class="in-poster" aria-hidden="true">
-    <div class="p-top">2026 JAMSIL SERIES</div>
+    <div class="p-top" id="pTop"></div>
     <div class="p-field"></div>
-    <div class="p-vs">LG<small>vs</small>두산</div>
-    <div class="p-meta">2026.10.20 TUE 6:30PM<span>잠실야구장</span></div>
+    <div class="p-vs" id="pVs"></div>
+    <div class="p-meta" id="pMeta"></div>
   </div>
-  <p class="in-name">LG vs 두산 · 잠실야구장</p>
+  <p class="in-name js-gv"></p>
   <button type="button" class="in-btn is-locked" id="bookBtn">남은시간 00:05</button>
   <p class="in-note">연습용 화면이에요 · 실제 예매·결제는 일어나지 않아요</p>
   <button type="button" class="in-rule" data-rule>연습 규칙 보기 ›</button>
@@ -396,6 +586,10 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
       <p class="sh-desc">고르고 시작하면 카운트다운이 시작돼요</p>
       <button type="button" class="sh-link" data-rule>어떻게 만들었는지 보기 ›</button>
       <div class="cf-groups">
+        <fieldset class="cf-group" id="stadSeg" hidden><legend>구장</legend><div class="cf-opts">
+          <label class="cf-radio"><input type="radio" name="cfStad" value="jamsil"><span>잠실야구장</span></label>
+          <label class="cf-radio"><input type="radio" name="cfStad" value="gwangju"><span>광주 챔피언스필드</span></label>
+        </div></fieldset>
         <fieldset class="cf-group" id="openSeg"><legend>카운트다운</legend><div class="cf-opts">
           <label class="cf-radio"><input type="radio" name="cfOpen" value="3"><span>3초</span></label>
           <label class="cf-radio"><input type="radio" name="cfOpen" value="5"><span>5초</span></label>
@@ -425,6 +619,14 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
       <p class="in-rec" id="recLine"></p>
       <button type="button" class="in-start" id="startBtn">연습 시작</button>
       <button type="button" class="in-cancel" id="cancelBtn">닫기</button>
+    </div>
+  </div>
+  <div class="in-dim" id="readyDim" hidden>
+    <div class="rd-card" role="dialog" aria-modal="true" aria-labelledby="rdTitle">
+      <p class="rd-title" id="rdTitle">준비해주세요</p>
+      <p class="rd-sub">카운트다운과 대기열은 건너뛰고<br>3초 뒤 바로 보안문자가 떠요.</p>
+      <b class="rd-num" id="readyNum">3</b>
+      <p class="rd-rank" id="readyRank"></p>
     </div>
   </div>
   <div class="in-dim" id="ruleDim" hidden>
@@ -465,7 +667,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
         <li>잠실 23,750석 중 <b>일반 예매분은 약 76%</b>. 나머지(선예매·구단 배정분)는 처음부터 팔린 상태예요.</li><li>좌석도 왼쪽 위에 <b>지금까지 입장한 인원</b>과 남은 좌석이 실시간으로 나와요.</li>
         <li>오픈 순간부터 팔리고, 한 사람이 같은 열의 붙은 자리를 묶어서 사요. <b>4매 70% · 2매 20% · 3매 7% · 1매 3%</b></li>
         <li>먼저 팔리는 순서: <b>① 중앙·테이블·오렌지·익사이팅·레드·블루 ② 오렌지 뒤 네이비(304~309, 326~331) ③ 그 외 네이비 ④ 외야</b></li>
-        <li>그룹 순서대로 팔리고(4%만 자리를 가리지 않음), 같은 그룹 안에서는 <b>통로 쪽 자리부터</b> 팔려요.</li><li>선예매·구단 배정분(24%)도 대부분 좋은 자리에 잡혀 있어요. 그래서 <b>약 1,300~2,000번째 입장자</b>쯤 ①그룹은 매진돼요.</li><li>네이비는 오렌지 뒤쪽(304~309, 326~331)과 그 외가 같이 팔리지만 오렌지 뒤쪽이 더 빨라요. 오렌지 뒤쪽은 <b>약 4,000~4,500번째</b>에 매진돼요.</li><li>마지막까지 남는 흩어진 단석은 주로 그 외 네이비·외야에 있어요.</li>
+        <li>그룹 순서대로 팔리고(4%만 자리를 가리지 않음), 같은 그룹 안에서는 <b>통로 쪽 자리부터</b> 팔려요.</li><li>선예매·구단 배정분(24%)도 대부분 좋은 자리에 잡혀 있어요. 그래서 <b>약 1,300~2,000번째 입장자</b>쯤 ①그룹은 매진돼요.</li><li>네이비는 오렌지 뒤쪽(304~309, 326~331)과 그 외가 같이 팔리지만 오렌지 뒤쪽이 더 빨라요. 오렌지 뒤쪽은 <b>약 4,000~4,500번째</b>에 매진돼요.</li><li>오렌지·레드·블루는 1·3루마다 몇 석씩 늦게까지 남아요. 약 2,000번째에도 10석 안팎이 보이고 약 3,500번째쯤 다 팔려요.</li>
         <li>그래서 4연석 → 3연석 → 2연석 → 단석 순으로 사라져요.</li>
       </ul>
         <div class="rl-wrap"><table class="rl-table">
@@ -477,6 +679,18 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
         </table></div>
         <ul style="margin-top:8px"><li>기준은 실제 사례 하나예요. 와일드카드 예매 때 7000번대에서 2연석을 못 잡았어요.</li><li>내가 입장한 뒤에도 초당 150석(단석만 남으면 40석)씩 계속 팔려요.</li></ul>
       </section>
+
+      <section class="rl-sec"><h3><i>+</i>보안문자부터 연습 · 자동배정</h3><ul>
+        <li>예매 대기 화면 오른쪽 위 <b>'보안문자부터 연습'</b>을 누르면 3초 뒤 바로 보안문자가 떠요. <b>5,000번 이하 무작위 순번</b>으로 입장한 상태에서 시작해요. 순번이 뒤일수록 좌석이 더 줄어 있어요.</li>
+        <li>좌석 화면에서 <b>관람 구역(등급)</b>을 고르면 <b>'자동 배정받기'</b>와 <b>'직접 좌석 선택하기'</b>가 나와요. 자동 배정은 매수를 고르면 그 구역의 붙은 자리를 무작위 순서로 하나씩 요청해요. 그 사이 다른 사람이 먼저 잡으면 다음 후보로 넘어가고, 3번 안에 못 잡으면 '계속 시도' 또는 '다른 구역 선택'을 고를 수 있어요.</li>
+        <li>2연석이 끝난 뒤(약 6,800번째) 남는 흩어진 단석은 대부분 외야에 있어요. 네이비는 약 7,000번째쯤 다 팔려요.</li>
+      </ul></section>
+
+      <section class="rl-sec"><h3><i>+</i>구장</h3><ul>
+        <li>연습 설정에서 <b>잠실야구장</b>과 <b>광주 챔피언스필드</b>를 고를 수 있어요.</li>
+        <li>챔피언스필드는 20,500석 기준이라 연석·매진 시점이 잠실보다 조금 빨라요(2연석 약 5,900번째, 완전 매진 약 7,700번째).</li>
+        <li>챔피언스필드의 등급 이름·가격·판매 순서는 연습용 임시값이에요.</li>
+      </ul></section>
 
       <section class="rl-sec"><h3><i>6</i>보안문자</h3><ul>
         <li>영문 6자예요. 소문자로 쳐도 대문자로 바뀌고, 6자가 되어야 '입력완료'가 켜져요.</li>
@@ -522,7 +736,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
     <div class="nt-wait-content">
       <div class="nt-wait-title">
         <h2><span id="waitLine1">접속 인원이 많아 대기 중입니다.</span><strong id="waitLine2">조금만 기다려주세요.</strong></h2>
-        <p class="nt-goods">LG vs 두산 · 잠실야구장</p>
+        <p class="nt-goods js-gv"></p>
       </div>
       <div class="nt-status">
         <div class="nt-status-main">
@@ -554,7 +768,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
   </header>
   <div class="nt-sub">
     <h2 class="nt-mo-title">좌석 선택</h2>
-    <span class="nt-sub-title">LG vs 두산</span>
+    <span class="nt-sub-title js-game"></span>
     <span class="nt-sub-div"></span>
     <span class="nt-sub-date">2026.10.20(화) 6:30 PM</span>
     <button type="button" class="nt-sub-chip">일정변경</button>
@@ -564,7 +778,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
     <div class="nt-help-tip" id="timerTip" hidden><strong>좌석 선택 시간</strong><p>제한 시간이 지나면 처음부터 다시 예매해야 돼요. 시간 내 선택 및 입력을 완료해 주세요.</p></div>
   </div>
   <div class="nt-mo-card">
-    <p class="nt-mo-card-title">LG vs 두산</p>
+    <p class="nt-mo-card-title js-game"></p>
     <div class="nt-mo-card-row"><span class="nt-mo-card-date">2026.10.20(화) 6:30 PM</span><button type="button" class="nt-mo-card-chip">일정변경 ›</button></div>
   </div>
   <div class="nt-seat-body">
@@ -576,11 +790,12 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
       </div>
       <div class="nt-live" id="liveBar"></div>
       <div class="nt-hint" id="planHint" hidden></div>
-      <button type="button" class="nt-grade-chip" id="gradeChip">등급별 잔여석</button>
+      <div class="nt-chips"><button type="button" class="nt-price-chip" id="priceChip">등급 별 가격 <span aria-hidden="true">ⓘ</span></button><button type="button" class="nt-auto-chip" id="gradeChip">관람 구역 선택</button></div>
+      <div class="nt-price-tip" id="priceTip" hidden></div>
       <div class="nt-grade-layer" id="gradeLayer" hidden></div>
       <div class="nt-minimap" id="miniMap"><svg class="nt-mini-plan" viewBox="0 0 840 850" id="miniLayer" preserveAspectRatio="none"></svg><div class="nt-mini-view" id="miniView"></div></div>
       <div class="nt-zoom"><button type="button" id="zoomIn" aria-label="확대">+</button><button type="button" id="zoomOut" aria-label="축소">−</button></div>
-      <button type="button" class="nt-zoom-fit" id="zoomFit" aria-label="전체보기"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/></svg></button>
+      <button type="button" class="nt-zoom-fit" id="zoomFit" aria-label="전체보기"><svg class="zf-out" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/></svg><svg class="zf-in" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v5H3M12 3v5h5M12 17v-5h5M8 17v-5H3"/></svg></button>
     </div>
     <aside class="nt-side">
       <div class="nt-remain" id="remainSide"></div>
@@ -593,6 +808,18 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
   </div>
 </section>
 
+<!-- 예매 안내 — 보안문자 전에 뜬다 -->
+<div class="nt-dim" id="noticeDim" hidden></div>
+<div class="nt-notice-pop" id="noticeBox" role="dialog" aria-modal="true" aria-labelledby="noticeTitle" hidden>
+  <div class="np-head"><h3 id="noticeTitle">예매 안내</h3></div>
+  <div class="np-body">
+    <p class="np-sub">※ 시야방해석 안내</p>
+    <p>경기장 구조로 인해 시야 방해가 있을 수 있으며, 이미지 내 별도 표시된 좌석은 시야방해석으로 관람하시기에 불편이 있을 수 있습니다.</p>
+    <p>취소 기간 이후, 시야 방해로 인한 취소는 불가능 하며 세부사항은 예매안내 유의사항을 참고하여 주시기 바랍니다.</p>
+  </div>
+  <button type="button" class="np-ok" id="noticeOk">확인하고 예매하기</button>
+</div>
+
 <!-- 보안문자 -->
 <div class="nt-dim" id="capDim" hidden></div>
 <form class="nt-cap" id="capBox" autocomplete="off" hidden>
@@ -603,7 +830,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
     <canvas id="capCanvas" width="420" height="140"></canvas>
     <button type="button" class="nt-cap-round r" id="capRefresh" aria-label="새로고침"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 10a6 6 0 1 1-1.8-4.3"/><path d="M16 3.5v3h-3"/></svg></button>
   </div>
-  <input class="nt-cap-input" id="capInput" placeholder="화면의 문자를 입력해주세요 (대소문자 구분없음)" aria-label="보안문자">
+  <input class="nt-cap-input" id="capInput" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="6" placeholder="화면의 문자를 입력해주세요 (대소문자 구분없음)" aria-label="보안문자">
   <p class="nt-cap-err" id="capErr"></p>
   <button type="submit" class="nt-done" id="capDone" disabled>입력완료</button>
 </form>
@@ -629,6 +856,13 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
   </div>
 </div>
 
+<!-- 자동배정 — 배정 중 -->
+<div class="au-load" id="auLoad" hidden>
+  <div class="au-center"><div class="au-content"><div class="nt-spinner"></div><p class="au-text">좌석을 배정 중이에요.
+잠시 기다려 주세요.</p></div></div>
+  <div class="au-bottom" id="auBottom"><p class="au-desc">예매 상황에 따라 최대 2분까지 걸릴 수 있어요.</p></div>
+</div>
+
 <!-- 결과 -->
 <div id="pkt-result-overlay"><div class="pkt-modal-card" id="resultCard"></div></div>
 
@@ -642,24 +876,26 @@ const pad2 = v => String(v).padStart(2, '0');
 const show = id => document.querySelectorAll('.nt-screen').forEach(s => s.classList.toggle('is-active', s.id === id));
 
 /* ═══ 연습 설정 — 기본값은 참고 페이지와 같다 ═══ */
-const DEFAULTS = { open: 5, crowd: 180000, speed: 10, overload: 1, want: 2 };
+const DEFAULTS = { stadium: 'jamsil', open: 5, crowd: 180000, speed: 10, overload: 1, want: 2 };
 const CFG = { ...DEFAULTS };
 try { Object.assign(CFG, JSON.parse(localStorage.getItem('jamsil_nt_cfg_v1') || '{}')); } catch (e) {}
 if (![3, 5].includes(CFG.open)) CFG.open = 5;
-const SEGS = { openSeg: 'open', crowdSeg: 'crowd', speedSeg: 'speed', overloadSeg: 'overload', wantSeg: 'want' };
+CFG.stadium = 'jamsil';   // 챔피언스필드는 보류 — 잠실만
+const SEGS = { stadSeg: 'stadium', openSeg: 'open', crowdSeg: 'crowd', speedSeg: 'speed', overloadSeg: 'overload', wantSeg: 'want' };
 let phaseIntro = 'idle';
 function paintCfg() {
   for (const [id, key] of Object.entries(SEGS)) {
-    document.querySelectorAll(`#${id} input`).forEach(r => { r.checked = Number(r.value) === CFG[key]; });
+    document.querySelectorAll(`#${id} input`).forEach(r => { r.checked = r.value === String(CFG[key]); });
   }
   if (phaseIntro === 'idle') $('bookBtn').textContent = `남은시간 00:${pad2(CFG.open)}`;
 }
 for (const [id, key] of Object.entries(SEGS)) {
   $(id).addEventListener('change', e => {
     if (phaseIntro !== 'idle') { paintCfg(); return; }
-    CFG[key] = Number(e.target.value);
+    CFG[key] = key === 'stadium' ? e.target.value : Number(e.target.value);
     try { localStorage.setItem('jamsil_nt_cfg_v1', JSON.stringify(CFG)); } catch (err) {}
     paintCfg();
+    if (key === 'stadium') { applyModel(CFG.stadium); useStadium(CFG.stadium); buildPlan(); }
   });
 }
 
@@ -674,12 +910,18 @@ const FEE = 2000;
      → 2연석은 약 6,800번째 입장자에서 끝나고, 단석까지 약 8,900번째에서 매진
      → 좌석도에서는 4연석이 약 6,000번째, 3연석이 약 6,300번째쯤 먼저 사라진다
    - 연석이 남은 동안 입장자 1명당 약 2.3석, 단석만 남은 뒤엔 약 1.1석씩 팔린다 */
-const STADIUM_SEATS = 23750, PUBLIC = 0.757;
-const SEATS = Math.round(STADIUM_SEATS * PUBLIC);
-const RATE = 400;
-const PAIR_CUT_AT = 6800, SOLDOUT_AT = 8900, SINGLE_PER_ENTRY = 1.1;
-const SCATTER = (SOLDOUT_AT - PAIR_CUT_AT) * SINGLE_PER_ENTRY / SEATS;   // 단석만 남는 시점의 남은 비율 (약 12.8%)
-const SEATS_PER_ENTRY = SEATS * (1 - SCATTER) / PAIR_CUT_AT;
+const PUBLIC = 0.757, RATE = 400, SINGLE_PER_ENTRY = 1.1;
+const STADIUM_SEATS_BY = { jamsil: 23750, gwangju: 20500 };   // 챔피언스필드는 잠실 기준값을 좌석 수 비율로 줄였다
+let STADIUM_SEATS, SEATS, PAIR_CUT_AT, SOLDOUT_AT, SCATTER, SEATS_PER_ENTRY;
+function applyModel(key) {
+  STADIUM_SEATS = STADIUM_SEATS_BY[key] || 23750;
+  const k = STADIUM_SEATS / 23750;
+  SEATS = Math.round(STADIUM_SEATS * PUBLIC);
+  PAIR_CUT_AT = Math.round(6800 * k); SOLDOUT_AT = Math.round(8900 * k);
+  SCATTER = (SOLDOUT_AT - PAIR_CUT_AT) * SINGLE_PER_ENTRY / SEATS;   // 단석만 남는 시점의 남은 비율 (약 12.8%)
+  SEATS_PER_ENTRY = SEATS * (1 - SCATTER) / PAIR_CUT_AT;
+}
+applyModel(CFG.stadium);
 const CAP_DRAIN = 150, CAP_DRAIN_SINGLE = 40;   // 입장 뒤에도 앞사람들이 결제를 마치며 초당 빠지는 좌석
 const pairCut = () => SEATS * (1 - SCATTER) / SEATS_PER_ENTRY;
 function seatsAfter(entered) {
@@ -738,7 +980,7 @@ let T = {};
 /* ═══ 0) 인트로 · 카운트다운 ═══ */
 let openAt = 0, introTimer = 0, preClicks = 0;
 $('startBtn').addEventListener('click', () => {
-  $('startDim').hidden = true;
+  $('startDim').hidden = true; $('quickBtn').hidden = true;
   phaseIntro = 'count';
   preClicks = 0;
   /* 남은 시간을 버려서 찍는다 — 05→00 이 1초씩 서고, 00:00 도 1초 선 뒤에 열린다 */
@@ -871,36 +1113,194 @@ function liveSeats() {
   return Math.max(0, Math.min(s, cut) - (t - tHi) * CAP_DRAIN_SINGLE);
 }
 
-/* ═══ 좌석 도면 — 잠실야구장 배치도 기준 ═══ */
-const GRADE = {
-  premium:  { name: '중앙석',     price: 70000, color: '#0b4fa3', rank: 0 },
-  table:    { name: '테이블석',   price: 47000, color: '#5e2f8f', rank: 1 },
-  exciting: { name: '익사이팅존', price: 30000, color: '#c3c4c9', rank: 2, dark: true },
-  blue:     { name: '블루석',     price: 22000, color: '#2c6aa5', rank: 3 },
-  orange:   { name: '오렌지석',   price: 20000, color: '#f08a1c', rank: 4 },
-  red:      { name: '레드석',     price: 17000, color: '#dc2a24', rank: 5 },
-  navy:     { name: '네이비석',   price: 14000, color: '#25275a', rank: 6 },
-  cheer:    { name: '그린응원석', price: 11000, color: '#1f9a3e', edge: '#f07a1e', rank: 7 },
-  green:    { name: '그린석',     price: 9000,  color: '#1f9a3e', rank: 8 },
-};
+/* ═══ 좌석 도면 — 구장별 설정 ═══ */
 const SOLD_FILL = '#edeff3';
-const VB = { w: 840, h: 850 };
-const C = { x: 420, y: 425 };                 // 구장 중심. 각도 0°=1루 쪽(오른쪽), 90°=홈 뒤(아래), 270°=전광판(위)
-const HOME = { x: C.x, y: C.y + 160 };
 const rad = d => d * Math.PI / 180;
-const P = (r, a) => [C.x + r * Math.cos(rad(a)), C.y + r * Math.sin(rad(a))];
 const f1 = v => v.toFixed(1);
+let ST, GRADE, VB, C, HOME, TIER, SEAT;
+const P = (r, a) => [C.x + r * Math.cos(rad(a)), C.y + r * Math.sin(rad(a))];
 /* 내야 스탠드는 홈 뒤쪽이 두껍고 1·3루 끝으로 갈수록 얇다 — 경계 반지름을 각도에 따라 바꾼다 */
-const B_SIDE = [397, 347, 307, 265], B_BOT = [397, 290, 250, 205];
-const bend = a => Math.pow(Math.max(0, Math.sin(rad(a))), 1.5);
-const Rb = (i, a) => B_SIDE[i] + (B_BOT[i] - B_SIDE[i]) * bend(a);
-const TIER = {
-  1:  { rin: a => Rb(3, a), rout: a => Rb(2, a) },
-  2:  { rin: a => Rb(2, a), rout: a => Rb(1, a) },
-  3:  { rin: a => Rb(1, a), rout: a => Rb(0, a) },
-  4:  { rin: () => 305, rout: () => 392 },
-  ex: { rin: a => Rb(3, a) - 26, rout: a => Rb(3, a) - 5 },
+const bendL = a => Math.pow(Math.max(0, Math.sin(rad(a))), 1.5);
+const lerpR = (side, bot) => a => side + (bot - side) * bendL(a);
+const seq = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
+const rep = (g, k) => Array(k).fill(g);
+function makeRun(out) {
+  return (tier, a, b, ids, grades) => ids.forEach((id, k) => {
+    const x0 = a + (b - a) * k / ids.length, x1 = a + (b - a) * (k + 1) / ids.length;
+    out.push({ id, grade: grades[k], tier, a0: Math.min(x0, x1), a1: Math.max(x0, x1), name: `${id}블록` });
+  });
+}
+function scoreboard(w = 84) {
+  return `<rect x="${C.x - w / 2}" y="${ST.boardY}" width="${w}" height="${ST.boardH}" rx="4" fill="#c9ccd3"/><text x="${C.x}" y="${ST.boardY + ST.boardH / 2}" text-anchor="middle" dominant-baseline="central" fill="#4a4f5b" font-size="${ST.boardH > 30 ? 16 : 12}" font-weight="700">전광판</text>`;
+}
+const STADIUMS = {
+  /* 잠실야구장 */
+  jamsil: {
+    game: 'LG vs 두산', venue: '잠실야구장', posterTop: '2026 JAMSIL SERIES', posterVs: 'LG<small>vs</small>두산',
+    posterBg: 'radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.28), transparent 60%), linear-gradient(180deg, #2b3a63 0%, #1c2a4a 55%, #10301f 100%)',
+    vb: { w: 840, h: 850 }, c: { x: 420, y: 425 }, home: { x: 420, y: 585 }, boardY: 18, boardH: 22,
+    seat: { spacing: 3.2, radius: 1.15, pad: 2.8 },
+    grade: {
+      premium:  { name: '중앙석',     price: 70000, color: '#0b4fa3', rank: 0 },
+      table:    { name: '테이블석',   price: 47000, color: '#5e2f8f', rank: 1 },
+      exciting: { name: '익사이팅존', price: 30000, color: '#c3c4c9', rank: 2, dark: true },
+      blue:     { name: '블루석',     price: 22000, color: '#2c6aa5', rank: 3 },
+      orange:   { name: '오렌지석',   price: 20000, color: '#f08a1c', rank: 4 },
+      red:      { name: '레드석',     price: 17000, color: '#dc2a24', rank: 5 },
+      navy:     { name: '네이비석',   price: 14000, color: '#25275a', rank: 6 },
+      cheer:    { name: '그린응원석', price: 11000, color: '#1f9a3e', edge: '#f07a1e', rank: 7 },
+      green:    { name: '그린석',     price: 9000,  color: '#1f9a3e', rank: 8 },
+    },
+    tier: (() => {
+      const S = [397, 347, 307, 265], B = [397, 290, 250, 205];
+      const Rb = i => lerpR(S[i], B[i]);
+      return {
+        1: { rin: Rb(3), rout: Rb(2) }, 2: { rin: Rb(2), rout: Rb(1) }, 3: { rin: Rb(1), rout: Rb(0) },
+        4: { rin: () => 305, rout: () => 392 },
+        ex: { rin: a => Rb(3)(a) - 26, rout: a => Rb(3)(a) - 5 },
+      };
+    })(),
+    blocks() {
+      const out = [], run = makeRun(out);
+      run(1, -10, 74, seq(101, 111), [...rep('red', 6), ...rep('blue', 3), ...rep('table', 2)]);
+      run(1, 106, 190, seq(112, 122), [...rep('table', 2), ...rep('blue', 3), ...rep('red', 6)]);
+      run(2, -12, 76, seq(201, 213), [...rep('red', 4), ...rep('orange', 4), ...rep('blue', 3), ...rep('table', 2)]);
+      out.push({ id: '중앙석', grade: 'premium', tier: 2, a0: 78, a1: 102, name: '중앙석', showName: true });
+      run(2, 104, 192, seq(214, 226), [...rep('table', 2), ...rep('blue', 3), ...rep('orange', 4), ...rep('red', 4)]);
+      run(3, -9, 189, seq(301, 334), rep('navy', 34));
+      run(4, -16, -84, seq(401, 411), [...rep('green', 4), ...rep('cheer', 4), ...rep('green', 3)]);
+      run(4, 262, 198, seq(412, 422), rep('green', 11));
+      out.push({ id: '익1', grade: 'exciting', tier: 'ex', a0: -12, a1: 20, name: '익사이팅존(1루)', strip: true });
+      out.push({ id: '익3', grade: 'exciting', tier: 'ex', a0: 160, a1: 192, name: '익사이팅존(3루)', strip: true });
+      return out;
+    },
+    field() {
+      const H = HOME, d = 68;
+      let s = `<circle cx="${C.x}" cy="${C.y - 20}" r="292" fill="#f0a63c"/>`;
+      s += `<circle cx="${C.x}" cy="${C.y - 20}" r="278" fill="#7bb352"/>`;
+      s += `<circle cx="${C.x}" cy="${H.y - d - 8}" r="${d * 1.45}" fill="#f0a63c"/>`;
+      s += `<path d="M${H.x} ${H.y}L${H.x + d} ${H.y - d}L${H.x} ${H.y - 2 * d}L${H.x - d} ${H.y - d}Z" fill="#7bb352" stroke="#3d3d3d" stroke-width="1"/>`;
+      s += `<path d="M${H.x} ${H.y}L${H.x + 215} ${H.y - 215}M${H.x} ${H.y}L${H.x - 215} ${H.y - 215}" stroke="#3d3d3d" stroke-width=".8" opacity=".6"/>`;
+      s += `<circle cx="${H.x}" cy="${H.y - d}" r="9" fill="#f0a63c" stroke="#3d3d3d" stroke-width=".8"/>`;
+      s += `<circle cx="${H.x}" cy="${H.y + 6}" r="13" fill="#f0a63c" stroke="#3d3d3d" stroke-width=".8"/>`;
+      return s + scoreboard();
+    },
+    /* 선호 순서: 0 중앙·테이블·오렌지(응원석)·익사이팅·레드·블루 > 1 오렌지 뒤 네이비(304~309, 326~331) > 2 그 외 네이비 > 3 외야 */
+    pref(s, b) {
+      const g = s.grade;
+      if (['premium', 'table', 'orange', 'exciting', 'red', 'blue'].includes(g)) return 0;
+      if (g === 'navy') return (b.id >= 304 && b.id <= 309) || (b.id >= 326 && b.id <= 331) ? 1 : 2;
+      return 3;
+    },
+    late: ['orange', 'red', 'blue'],
+  },
+
+  /* 광주-기아 챔피언스필드 — 3루가 홈(KIA). 등급 이름·가격은 연습용 임시값 */
+  gwangju: {
+    game: 'KIA vs LG', venue: '광주-기아 챔피언스필드', posterTop: '2026 GWANGJU SERIES', posterVs: 'KIA<small>vs</small>LG',
+    posterBg: 'radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.22), transparent 60%), linear-gradient(180deg, #a31d24 0%, #5a1215 55%, #1c0b0c 100%)',
+    vb: { w: 1250, h: 1380 }, c: { x: 622, y: 660 }, home: { x: 622, y: 925 }, boardY: 52, boardH: 40,
+    seat: { spacing: 5, radius: 1.8, pad: 4.3 },
+    grade: {
+      champ:    { name: '챔피언석',     price: 80000, color: '#00a0a8', rank: 0 },
+      ctable:   { name: '중앙테이블석', price: 55000, color: '#3aaed8', rank: 1 },
+      surprise: { name: '서프라이즈석', price: 35000, color: '#e0662c', rank: 2 },
+      party:    { name: '파티석',       price: 30000, color: '#f39a85', rank: 3 },
+      green:    { name: '그린석',       price: 30000, color: '#74b77a', rank: 4 },
+      red:      { name: '레드석',       price: 25000, color: '#e63946', rank: 5 },
+      yellow:   { name: '옐로우석',     price: 22000, color: '#e8b54d', rank: 6 },
+      coral:    { name: '코랄석',       price: 20000, color: '#e3826f', rank: 7 },
+      infam:    { name: '내야가족석',   price: 18000, color: '#f27f7a', rank: 8 },
+      pink:     { name: '핑크석',       price: 15000, color: '#d9558f', rank: 9 },
+      sky:      { name: '스카이석',     price: 12000, color: '#7ba5d8', rank: 10 },
+      outfield: { name: '외야석',       price: 9000,  color: '#c9cf2a', rank: 11, dark: true },
+      offam:    { name: '외야가족석',   price: 9000,  color: '#6aaa49', rank: 12 },
+    },
+    tier: (() => {
+      // 1층은 1·3루 끝에서 파울라인 쪽으로 좁아진다
+      const in1 = a => lerpR(292, 355)(a) + Math.max(0, -2 - a) * 8 + Math.max(0, a - 182) * 8;
+      return {
+        1: { rin: in1, rout: lerpR(440, 512) },
+        ch: { rin: () => 352, rout: () => 398 },
+        tb: { rin: () => 404, rout: () => 516 },
+        3: { rin: lerpR(447, 541), rout: lerpR(490, 585) },
+        5: { rin: lerpR(518, 592), rout: lerpR(603, 700) },
+        side: { rin: () => 447, rout: () => 515 },
+        of: { rin: () => 470, rout: () => 555 },
+        fam: { rin: () => 560, rout: () => 618 },
+        sp: { rin: a => in1(a) - 32, rout: a => in1(a) - 6 },
+      };
+    })(),
+    blocks() {
+      const out = [], run = makeRun(out);
+      const by = (ids, grades, bounds) => ids.forEach((id, k) => out.push({ id, grade: grades[k], tier: 1, a0: bounds[k], a1: bounds[k + 1], name: `${id}블록` }));
+      // 1층 1루 101~113 · 3루 116~127 (이미지의 블록 위치에 맞춘 경계)
+      by(seq(101, 113), [...rep('coral', 6), ...rep('yellow', 5), ...rep('green', 2)], [-17, -12.9, -8.7, -2.5, 5.5, 13.3, 21.4, 29.9, 38.5, 47.4, 55.3, 62.3, 68.5, 73]);
+      out.push({ id: '챔피언석', grade: 'champ', tier: 'ch', a0: 73, a1: 107, name: '챔피언석', showName: true });
+      out.push({ id: '중앙테이블석', grade: 'ctable', tier: 'tb', a0: 73, a1: 107, name: '중앙테이블석', showName: true });
+      by(seq(116, 127), ['green', 'green', 'yellow', 'yellow', 'red', 'red', 'red', 'yellow', 'coral', 'coral', 'coral', 'coral'], [107, 110.9, 117.4, 124.5, 132.5, 141.4, 149.9, 158.2, 166.4, 174.2, 182.2, 188.8, 194]);
+      // 3xx(핑크)·5xx(스카이)
+      run(3, 4.6, 174.5, seq(301, 335), rep('pink', 35));
+      run(5, -1, 181, seq(501, 535), rep('sky', 35));
+      // 서프라이즈·파티·내야가족
+      out.push({ id: 'S1', grade: 'surprise', tier: 'sp', a0: 12, a1: 30, name: '1루 서프라이즈석', strip: true });
+      out.push({ id: 'S3', grade: 'surprise', tier: 'sp', a0: 150, a1: 168, name: '3루 서프라이즈석', strip: true });
+      out.push({ id: 'P1', grade: 'party', tier: 'side', a0: -8, a1: -1, name: '1루 파티석', strip: true });
+      out.push({ id: 'P3', grade: 'party', tier: 'side', a0: 181, a1: 188, name: '3루 파티석', strip: true });
+      out.push({ id: 'F1', grade: 'infam', tier: 'side', a0: -24, a1: -9, name: '1루 내야가족석', strip: true });
+      out.push({ id: 'F3', grade: 'infam', tier: 'side', a0: 188, a1: 202, name: '3루 내야가족석', strip: true });
+      // 외야 — 한쪽을 5구역으로
+      [['3루', 203, 259], ['1루', -79, -24]].forEach(([side, a, b]) => {
+        for (let k = 0; k < 5; k++) {
+          const x0 = a + (b - a) * k / 5, x1 = a + (b - a) * (k + 1) / 5;
+          out.push({ id: `${side}외야${k + 1}`, grade: 'outfield', tier: 'of', a0: x0, a1: x1, name: `${side} 외야석 ${k + 1}구역`, showName: k === 2, label: '외야석' });
+          out.push({ id: `${side}외가${k + 1}`, grade: 'offam', tier: 'fam', a0: x0, a1: x1, name: `${side} 외야가족석 ${k + 1}구역`, showName: k === 2, label: '외야가족석' });
+        }
+      });
+      return out;
+    },
+    field() {
+      const H = HOME, fan = r => { const q = r * Math.SQRT1_2; return `M${H.x} ${H.y}L${f1(H.x - q)} ${f1(H.y - q)}A${r} ${r} 0 0 1 ${f1(H.x + q)} ${f1(H.y - q)}Z`; };
+      const d = 112;
+      let s = `<path d="${fan(742)}" fill="#f0a63c"/><path d="${fan(716)}" fill="#7bb352"/>`;
+      s += `<circle cx="${H.x}" cy="${H.y - 70}" r="168" fill="#f0a63c"/>`;
+      s += `<path d="M${H.x} ${H.y}L${H.x + d} ${H.y - d}L${H.x} ${H.y - 2 * d}L${H.x - d} ${H.y - d}Z" fill="#7bb352" stroke="#3d3d3d" stroke-width="1"/>`;
+      s += `<path d="M${H.x} ${H.y}L${H.x + 520} ${H.y - 520}M${H.x} ${H.y}L${H.x - 520} ${H.y - 520}" stroke="#3d3d3d" stroke-width="1" opacity=".5"/>`;
+      s += `<circle cx="${H.x}" cy="${H.y - d}" r="14" fill="#f0a63c" stroke="#3d3d3d" stroke-width="1"/>`;
+      s += `<circle cx="${H.x}" cy="${H.y + 8}" r="20" fill="#f0a63c" stroke="#3d3d3d" stroke-width="1"/>`;
+      s += `<path d="${ringPathRaw(470, 618, 259.5, 280.5)}" fill="#e4e7ee"/><text x="${C.x}" y="${C.y - 520}" text-anchor="middle" dominant-baseline="central" fill="#9aa0ad" font-size="12" font-weight="600">키즈챔피언스필드</text>`;
+      s += `<text x="${C.x - 190}" y="${C.y - 40}" text-anchor="middle" fill="rgba(255,255,255,.55)" font-size="30" font-weight="800">3루(HOME)</text><text x="${C.x + 190}" y="${C.y - 40}" text-anchor="middle" fill="rgba(255,255,255,.55)" font-size="30" font-weight="800">1루(AWAY)</text>`;
+      return s + scoreboard(276);
+    },
+    /* 선호 순서(임시): 0 챔피언·중앙테이블·그린·레드(3루 응원)·서프라이즈·파티 > 1 옐로우·코랄 > 2 핑크·스카이·내야가족 > 3 외야 */
+    pref(s) {
+      const g = s.grade;
+      if (['champ', 'ctable', 'green', 'red', 'surprise', 'party'].includes(g)) return 0;
+      if (g === 'yellow' || g === 'coral') return 1;
+      if (g === 'pink' || g === 'sky' || g === 'infam') return 2;
+      return 3;
+    },
+    late: ['yellow', 'coral', 'green'],
+  },
 };
+function ringPathRaw(r1, r2, a0, a1) {
+  const N = Math.max(2, Math.ceil((a1 - a0) / 1.5)), pts = [];
+  for (let i = 0; i <= N; i++) pts.push(P(r2, a0 + (a1 - a0) * i / N));
+  for (let i = N; i >= 0; i--) pts.push(P(r1, a0 + (a1 - a0) * i / N));
+  return 'M' + pts.map(p => f1(p[0]) + ' ' + f1(p[1])).join('L') + 'Z';
+}
+function useStadium(key) {
+  ST = STADIUMS[key] || STADIUMS.jamsil;
+  GRADE = ST.grade; VB = ST.vb; C = ST.c; HOME = ST.home; TIER = ST.tier; SEAT = ST.seat;
+  const map = $('planMap'); map.style.width = VB.w + 'px'; map.style.height = VB.h + 'px';
+  ['baseLayer', 'seatLayer', 'blockLayer', 'miniLayer'].forEach(id => $(id).setAttribute('viewBox', `0 0 ${VB.w} ${VB.h}`));
+  document.querySelectorAll('.js-game').forEach(el => { el.textContent = ST.game; });
+  document.querySelectorAll('.js-gv').forEach(el => { el.textContent = `${ST.game} · ${ST.venue}`; });
+  $('pTop').textContent = ST.posterTop; $('pVs').innerHTML = ST.posterVs;
+  $('pMeta').innerHTML = `2026.10.20 TUE 6:30PM<span>${ST.venue}</span>`;
+  document.querySelector('.in-poster').style.background = ST.posterBg;
+  rowsOf = null; selGrade = null; gpMode = 'list';
+}
 function ringPath(tier, a0, a1, g = 0.6) {
   const t = TIER[tier];
   a0 += g; a1 -= g;
@@ -909,43 +1309,8 @@ function ringPath(tier, a0, a1, g = 0.6) {
   for (let i = N; i >= 0; i--) { const a = a0 + (a1 - a0) * i / N; pts.push(P(t.rin(a) + 1.2, a)); }
   return 'M' + pts.map(p => f1(p[0]) + ' ' + f1(p[1])).join('L') + 'Z';
 }
-function buildBlocks() {
-  const out = [];
-  const run = (tier, a, b, ids, grades) => ids.forEach((id, k) => {
-    const x0 = a + (b - a) * k / ids.length, x1 = a + (b - a) * (k + 1) / ids.length;
-    out.push({ id, grade: grades[k], tier, a0: Math.min(x0, x1), a1: Math.max(x0, x1), name: `${id}블록` });
-  });
-  const seq = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => from + i);
-  const rep = (g, k) => Array(k).fill(g);
-  // 1층(1xx) — 오른쪽 1루, 왼쪽 3루
-  run(1, -10, 74, seq(101, 111), [...rep('red', 6), ...rep('blue', 3), ...rep('table', 2)]);
-  run(1, 106, 190, seq(112, 122), [...rep('table', 2), ...rep('blue', 3), ...rep('red', 6)]);
-  // 2층(2xx)과 중앙석
-  run(2, -12, 76, seq(201, 213), [...rep('red', 4), ...rep('orange', 4), ...rep('blue', 3), ...rep('table', 2)]);
-  out.push({ id: '중앙석', grade: 'premium', tier: 2, a0: 78, a1: 102, name: '중앙석' });
-  run(2, 104, 192, seq(214, 226), [...rep('table', 2), ...rep('blue', 3), ...rep('orange', 4), ...rep('red', 4)]);
-  // 3층(3xx) 네이비
-  run(3, -9, 189, seq(301, 334), rep('navy', 34));
-  // 외야(4xx) — 405~408 그린응원석, 가운데 전광판
-  run(4, -16, -84, seq(401, 411), [...rep('green', 4), ...rep('cheer', 4), ...rep('green', 3)]);
-  run(4, 262, 198, seq(412, 422), rep('green', 11));
-  // 익사이팅존 — 1·3루 파울라인 쪽 좁은 띠
-  out.push({ id: '익1', grade: 'exciting', tier: 'ex', a0: -12, a1: 20, name: '익사이팅존(1루)' });
-  out.push({ id: '익3', grade: 'exciting', tier: 'ex', a0: 160, a1: 192, name: '익사이팅존(3루)' });
-  return out;
-}
-function renderField() {
-  const H = HOME, d = 68;
-  let s = `<circle cx="${C.x}" cy="${C.y - 20}" r="292" fill="#f0a63c"/>`;
-  s += `<circle cx="${C.x}" cy="${C.y - 20}" r="278" fill="#7bb352"/>`;
-  s += `<circle cx="${C.x}" cy="${H.y - d - 8}" r="${d * 1.45}" fill="#f0a63c"/>`;
-  s += `<path d="M${H.x} ${H.y}L${H.x + d} ${H.y - d}L${H.x} ${H.y - 2 * d}L${H.x - d} ${H.y - d}Z" fill="#7bb352" stroke="#3d3d3d" stroke-width="1"/>`;
-  s += `<path d="M${H.x} ${H.y}L${H.x + 215} ${H.y - 215}M${H.x} ${H.y}L${H.x - 215} ${H.y - 215}" stroke="#3d3d3d" stroke-width=".8" opacity=".6"/>`;
-  s += `<circle cx="${H.x}" cy="${H.y - d}" r="9" fill="#f0a63c" stroke="#3d3d3d" stroke-width=".8"/>`;
-  s += `<circle cx="${H.x}" cy="${H.y + 6}" r="13" fill="#f0a63c" stroke="#3d3d3d" stroke-width=".8"/>`;
-  s += `<rect x="${C.x - 42}" y="18" width="84" height="22" rx="4" fill="#c9ccd3"/><text x="${C.x}" y="29" text-anchor="middle" dominant-baseline="central" fill="#4a4f5b" font-size="12" font-weight="700">전광판</text>`;
-  return s;
-}
+const buildBlocks = () => ST.blocks();
+const renderField = () => ST.field();
 let blocks = [], seats = [], seatEls = [];
 function renderBase() {
   return `<rect width="${VB.w}" height="${VB.h}" fill="${SOLD_FILL}"/>` + renderField()
@@ -955,12 +1320,14 @@ function label(b) {
   const t = TIER[b.tier], mid = (b.a0 + b.a1) / 2;
   const [x, y] = P((t.rin(mid) + t.rout(mid)) / 2, mid);
   const fill = GRADE[b.grade].dark ? '#4a4f5b' : '#fff';
-  if (b.tier === 'ex') {
+  if (b.strip) {
     let rot = mid + 90; while (rot > 90) rot -= 180;
-    return `<text x="${f1(x)}" y="${f1(y)}" transform="rotate(${f1(rot)} ${f1(x)} ${f1(y)})" text-anchor="middle" dominant-baseline="central" fill="${fill}" font-size="9" font-weight="700" pointer-events="none">${b.name}</text>`;
+    return `<text x="${f1(x)}" y="${f1(y)}" transform="rotate(${f1(rot)} ${f1(x)} ${f1(y)})" text-anchor="middle" dominant-baseline="central" fill="${fill}" font-size="${VB.w > 1000 ? 12 : 9}" font-weight="700" pointer-events="none">${b.name}</text>`;
   }
-  const size = typeof b.id === 'number' ? 12 : 14;
-  return `<text x="${f1(x)}" y="${f1(y)}" text-anchor="middle" dominant-baseline="central" fill="${fill}" font-size="${size}" font-weight="700" pointer-events="none">${b.id}</text>`;
+  const big = VB.w > 1000 ? 1.45 : 1;
+  if (typeof b.id === 'number') return `<text x="${f1(x)}" y="${f1(y)}" text-anchor="middle" dominant-baseline="central" fill="${fill}" font-size="${f1(12 * big)}" font-weight="700" pointer-events="none">${b.id}</text>`;
+  if (!b.showName) return '';
+  return `<text x="${f1(x)}" y="${f1(y)}" text-anchor="middle" dominant-baseline="central" fill="${fill}" font-size="${f1(14 * big)}" font-weight="700" pointer-events="none">${b.label || b.name}</text>`;
 }
 function renderBlocks(withLabel = true) {
   return blocks.map(b => {
@@ -969,7 +1336,6 @@ function renderBlocks(withLabel = true) {
     return `<path class="blk" d="${ringPath(b.tier, b.a0, b.a1)}" fill="${g.color}"${edge}/>` + (withLabel ? label(b) : '');
   }).join('');
 }
-const SEAT = { spacing: 3.2, radius: 1.15, pad: 2.8 };
 function renderSeats() {
   const out = [], sp = SEAT.spacing;
   seats = [];
@@ -1004,6 +1370,7 @@ let sellOrder = [], sellCursor = 0, soldCount = 0, preSoldCount = 0;
 const sold = new Set(), soldList = [];
 let syncedIdx = 0;
 function buildPlan() {
+  sold.clear(); soldList.length = 0; sellCursor = 0; soldCount = 0; syncedIdx = 0; picked.length = 0;
   blocks = buildBlocks();
   $('baseLayer').innerHTML = renderBase();
   $('seatLayer').innerHTML = renderSeats();
@@ -1015,26 +1382,88 @@ function buildPlan() {
   blockTotal = blocks.map(() => 0); gradeTotal = {};
   seats.forEach(s => { blockTotal[s.bi]++; gradeTotal[s.grade] = (gradeTotal[s.grade] || 0) + 1; });
   blockLeft = blockTotal.slice(); gradeLeft = { ...gradeTotal };
+  buildZones();
   buildSellOrder();
   renderRemain();
 }
 /* ─── 잔여석 집계 — 화면에 팔린 걸로 칠해진 좌석 기준 ─── */
+let selGrade = null;   // 선택한 관람 구역 키 (예: orange@1루)
 let blockEls = [], blockLabels = [], blockTotal = [], blockLeft = [], gradeTotal = {}, gradeLeft = {};
-function renderRemain() {
-  const rows = Object.entries(GRADE).filter(([k]) => gradeTotal[k]).map(([k, g]) => {
-    const left = gradeLeft[k], ratio = left / gradeTotal[k];
-    const cls = left <= 0 ? 'out' : ratio < 0.1 ? 'low' : '';
-    return `<li><i style="background:${g.color}${g.edge ? `;box-shadow:inset 0 0 0 2px ${g.edge}` : ''}"></i><span>${g.name}</span><small>${won(g.price)}</small><b class="${cls}">${left <= 0 ? '매진' : n(left) + '석'}</b></li>`;
+/* 놀은 등급을 1루·3루·중앙으로 나눠 '관람 구역'으로 보여준다 (예: 1루 오렌지석) */
+let zones = [], zoneOf = [], zoneTotal = {}, zoneLeft = {};
+const ZONE_NOTE = {
+  orange: '응원단상 안전 난간 설치로 인해, 인근 구역 시야방해가 생길 수 있습니다. 도면 참고 후 관람에 참고 바랍니다.',
+  exciting: '익사이팅석은 안전상 문제로 초등학생까지는 관람 불가합니다. (보호자 동반시에도 입장불가)',
+};
+function sideOf(b) {
+  if (b.id === '익1') return '1루';
+  if (b.id === '익3') return '3루';
+  if (b.grade === 'premium') return '';
+  const m = (b.a0 + b.a1) / 2;
+  return m < 80 ? '1루' : m > 100 ? '3루' : '중앙';
+}
+function buildZones() {
+  const map = new Map(), SO = { '': 0, '1루': 0, '3루': 1, '중앙': 2 };
+  zoneOf = []; zoneTotal = {};
+  blocks.forEach((b, bi) => {
+    const side = sideOf(b), key = `${b.grade}@${side}`;
+    if (!map.has(key)) map.set(key, { key, grade: b.grade, name: side ? `${side} ${GRADE[b.grade].name}` : GRADE[b.grade].name });
+    zoneOf[bi] = key; zoneTotal[key] = (zoneTotal[key] || 0) + blockTotal[bi];
+  });
+  zones = [...map.values()].filter(z => zoneTotal[z.key] > 0).sort((x, y) => (GRADE[x.grade].rank - GRADE[y.grade].rank) || (SO[x.key.split('@')[1]] - SO[y.key.split('@')[1]]));
+  zoneLeft = { ...zoneTotal };
+}
+const zoneBy = k => zones.find(z => z.key === k);
+let gpMode = 'list', auResult = null;   // list → count(매수) → result(배정 결과)
+const ICON_BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>';
+const ICON_X = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 2l12 12M14 2L2 14"/></svg>';
+const ICON_INFO = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="10" cy="10" r="7.3"/><path d="M10 9v5" stroke-linecap="round"/><circle cx="10" cy="6.3" r=".6" fill="currentColor" stroke="none"/></svg>';
+const ICON_MINUS = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 8h12"/></svg>';
+const ICON_PLUS = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 8h12M8 2v12"/></svg>';
+const dotOf = g => `background:${g.color}`;
+function panelHTML() {
+  const x = `<button type="button" class="gp-x" data-act="close" aria-label="닫기"></button>`;
+  if (gpMode === 'count') {
+    const z = zoneBy(auGrade), g = GRADE[z.grade];
+    return `<div class="gp"><div class="as-head"><button type="button" class="as-back" data-act="back" aria-label="관람 구역 다시 선택">${ICON_BACK}</button><h3>자동 배정 받을 좌석 수를 선택해 주세요</h3>${x}</div>
+      <div class="as-body"><div class="ac-card"><div class="ac-info"><p class="ac-name"><i style="${dotOf(g)}"></i><span>${z.name}</span></p><p class="ac-price">${won(g.price)}</p></div>
+      <div class="ac-step"><button type="button" data-act="minus" aria-label="한 장 줄이기"${auCount <= 0 ? ' disabled' : ''}>${ICON_MINUS}</button><output>${auCount}</output><button type="button" data-act="plus" aria-label="한 장 늘리기"${auCount >= MAX_PICK ? ' disabled' : ''}>${ICON_PLUS}</button></div></div></div>
+      <div class="gp-foot flat"><button type="button" class="ent primary" data-act="go"${auCount ? '' : ' disabled'}>선택 완료</button></div></div>`;
+  }
+  if (gpMode === 'result') {
+    const items = auResult.map(i => { const st = seats[i], g = GRADE[st.grade]; return `<div class="ar-div"></div><div class="ar-item"><div class="ar-info"><b>${zoneBy(zoneOf[st.bi]).name}</b><span>${seatName(st)}</span></div><strong>${won(g.price)}</strong></div>`; }).join('');
+    return `<div class="gp"><div class="as-head"><h3>&nbsp;</h3></div><div class="as-body"><div class="ar-card"><p class="ar-msg">좌석 ${auResult.length}개가 자동 배정됐어요</p>${items}</div></div>
+      <div class="gp-foot flat"><button type="button" class="ent primary" data-act="confirm">확인 완료</button></div></div>`;
+  }
+  const rows = zones.map(z => {
+    const g = GRADE[z.grade], note = ZONE_NOTE[z.grade];
+    return `<li><button type="button" class="gp-item${selGrade === z.key ? ' sel' : ''}" data-zone="${z.key}"><span class="gp-row"><i style="${dotOf(g)}"></i><b>${z.name}</b><em>${n(Math.max(0, zoneLeft[z.key]))}</em></span>${note ? `<span class="gp-note">${ICON_INFO}<span>${note}</span></span>` : ''}</button></li>`;
   }).join('');
+  const foot = selGrade ? `<div class="gp-foot"><button type="button" class="ent" data-act="auto">자동 배정받기</button><button type="button" class="ent primary" data-act="direct">직접 좌석 선택하기</button></div>` : '';
+  return `<div class="gp"><div class="gp-head"><h3>관람 구역을 선택해 주세요</h3>${x}</div><div class="gp-body"><ul class="gp-list">${rows}</ul></div>${foot}</div>`;
+}
+function renderPanel() {
+  const html = panelHTML();
+  ['gradeLayer', 'remainSide'].forEach(id => {
+    const el = $(id), body = el.querySelector('.gp-body, .as-body'), top = body ? body.scrollTop : 0, mode = el.dataset.mode;
+    el.innerHTML = html; el.dataset.mode = gpMode;
+    if (mode === gpMode) { const b2 = el.querySelector('.gp-body, .as-body'); if (b2) b2.scrollTop = top; }
+  });
+}
+/* 잔여석이 바뀔 땐 숫자만 고친다 — 통째로 다시 그리면 누르는 도중 버튼이 바뀌어 클릭이 사라진다 */
+function updateCounts() {
+  ['gradeLayer', 'remainSide'].forEach(id => {
+    const items = $(id).querySelectorAll('[data-zone]');
+    if (!items.length) { if (gpMode === 'list') renderPanel(); return; }
+    items.forEach(el => { const em = el.querySelector('em'), v = n(Math.max(0, zoneLeft[el.dataset.zone])); if (em.textContent !== v) em.textContent = v; });
+  });
+}
+function renderRemain() {
+  if (gpMode === 'list') updateCounts();
   const left = liveSeats(), cut = SEATS * SCATTER;
   const entered = left >= cut ? (SEATS - left) / SEATS_PER_ENTRY : PAIR_CUT_AT + (cut - left) / SINGLE_PER_ENTRY;
-  const html = `<p class="rm-head">등급별 잔여석<span class="rm-live">실시간</span></p>
-    <p class="rm-entered">누적 입장 <b>${n(Math.max(0, entered))}명</b><span>내 순번 ${n(T.firstRank || 0)}번</span></p>
-    <ul class="rm-list">${rows}</ul>`;
-  $('gradeLayer').innerHTML = html;
   const openSeats = Object.values(gradeLeft).reduce((x, y) => x + y, 0);
   $('liveBar').innerHTML = `입장 <b class="blue">${n(Math.max(0, entered))}명</b><i></i>남은 좌석 <b>${n(openSeats)}석</b>`;
-  $('remainSide').innerHTML = html;
   // 구역은 팔릴수록 옅어지고, 매진되면 회색
   blockEls.forEach((el, bi) => {
     const left = blockLeft[bi];
@@ -1047,17 +1476,12 @@ function renderRemain() {
    나머지는 홈플레이트에 가깝고 좋은 등급부터 팔리며, 20%는 자리를 가리지 않고 팔린다 */
 /* 선호도 순서 — 이 순서대로 먼저 팔린다
    0 중앙석·테이블·오렌지(응원석)·익사이팅·레드·블루 > 1 오렌지 뒤 네이비(304~309, 326~331) > 2 그 외 네이비 > 3 외야 */
-function prefGroup(s) {
-  const b = blocks[s.bi], g = s.grade;
-  if (['premium', 'table', 'orange', 'exciting', 'red', 'blue'].includes(g)) return 0;
-  if (g === 'navy') return (b.id >= 304 && b.id <= 309) || (b.id >= 326 && b.id <= 331) ? 1 : 2;
-  return 3;
-}
+const prefGroup = s => ST.pref(s, blocks[s.bi]);
 function buildSellOrder() {
   const N = seats.length;
   const at = new Map(seats.map((s, i) => [`${s.bi}-${s.row}-${s.col}`, i]));
   const nbr = (i, d) => { const s = seats[i]; return at.get(`${s.bi}-${s.row}-${s.col + d}`); };
-  const taken = new Uint8Array(N), single = new Uint8Array(N);
+  const taken = new Uint8Array(N), single = new Uint8Array(N), late = new Uint8Array(N);
   const shuffle = a => { for (let x = a.length - 1; x > 0; x--) { const y = Math.floor(Math.random() * (x + 1)); [a[x], a[y]] = [a[y], a[x]]; } return a; };
   /* 한 사람이 사는 매수 — 1매 3% · 2매 20% · 3매 7% · 4매 70% */
   const kPick = () => { const r = Math.random(); return r < .03 ? 1 : r < .23 ? 2 : r < .30 ? 3 : 4; };
@@ -1074,8 +1498,8 @@ function buildSellOrder() {
     let a = nbr(i, leftFirst ? -1 : 1), b = nbr(i, leftFirst ? 1 : -1);
     const da = leftFirst ? -1 : 1, db = -da;
     while (out.length < k) {
-      if (a != null && !taken[a] && !single[a]) { out.push(a); taken[a] = 1; a = nbr(a, da); }
-      else if (b != null && !taken[b] && !single[b]) { out.push(b); taken[b] = 1; b = nbr(b, db); }
+      if (a != null && !taken[a] && !single[a] && !late[a]) { out.push(a); taken[a] = 1; a = nbr(a, da); }
+      else if (b != null && !taken[b] && !single[b] && !late[b]) { out.push(b); taken[b] = 1; b = nbr(b, db); }
       else break;
     }
     return out;
@@ -1096,22 +1520,38 @@ function buildSellOrder() {
   for (const { i } of preSeeds) { if (pre.length >= preTarget) break; if (!taken[i]) pre.push(...grab(i, kPick())); }
   preSoldCount = pre.length;
   // 마지막까지 남을 흩어진 단석 — 2연석이 끝나는 시점(약 6,800번째)부터 이것만 남는다.
-  // 인기 구역은 끝까지 남지 않도록 그 외 네이비·외야에만 두고, 같은 열에서 서로 붙지 않게
+  // 외야에 먼저 두고(네이비는 약 7,000번째에 다 나가도록), 모자랄 때만 그 외 네이비에. 같은 열에서 서로 붙지 않게
   const rest = shuffle(seats.map((_, i) => i).filter(i => !taken[i]));
   const target = Math.round(rest.length * SCATTER);
   let cnt = 0;
-  for (const i of rest) {
-    if (cnt >= target) break;
-    if (prefGroup(seats[i]) < 2) continue;
-    if (aisle(i) === 0) continue;   // 통로 자리는 먼저 팔리므로 마지막 단석으로 남기지 않는다
-    const l = nbr(i, -1), r = nbr(i, 1);
-    if ((l != null && single[l]) || (r != null && single[r])) continue;
-    single[i] = 1; cnt++;
+  for (const want of [3, 2]) {
+    for (const i of rest) {
+      if (cnt >= target) break;
+      if (single[i] || prefGroup(seats[i]) !== want) continue;
+      if (aisle(i) === 0) continue;   // 통로 자리는 먼저 팔리므로 마지막 단석으로 남기지 않는다
+      const l = nbr(i, -1), r = nbr(i, 1);
+      if ((l != null && single[l]) || (r != null && single[r])) continue;
+      single[i] = 1; cnt++;
+    }
   }
-  // 선호도 순서대로 구매가 일어난다
-  const seeds = rest.filter(i => !single[i]).map(i => ({ i, k: prefKey(i) })).sort((a, b) => a.k - b.k);
-  const body = [];
-  for (const { i } of seeds) if (!taken[i]) body.push(...grab(i, kPick()));
+  /* 오렌지·레드·블루는 1·3루 각각 몇 석씩 늦게까지 남는다 — 약 2,000번째에도 10석 안팎이 보이고 약 3,500번째까지 다 팔린다 */
+  const LATE_PER = 14, lateCnt = {};
+  for (const i of rest) {
+    const s = seats[i];
+    if (single[i] || !ST.late.includes(s.grade) || aisle(i) === 0) continue;
+    const b = blocks[s.bi], key = s.grade + ((b.a0 + b.a1) / 2 < 90 ? '1루' : '3루');
+    if ((lateCnt[key] || 0) >= LATE_PER) continue;
+    const l = nbr(i, -1), r = nbr(i, 1);
+    if ((l != null && late[l]) || (r != null && late[r])) continue;
+    late[i] = 1; lateCnt[key] = (lateCnt[key] || 0) + 1;
+  }
+  // 선호도 순서대로 구매가 일어난다 (늦게 남는 자리는 자기 차례에 한 석씩)
+  const seeds = rest.filter(i => !single[i] && !late[i]).map(i => ({ i, k: prefKey(i) })).sort((a, b) => a.k - b.k);
+  const events = [];
+  for (const { i, k } of seeds) if (!taken[i]) events.push({ k, list: grab(i, kPick()) });
+  rest.filter(i => late[i]).forEach(i => { taken[i] = 1; events.push({ k: 2.05 + Math.random() * 0.25, list: [i] }); });
+  events.sort((a, b) => a.k - b.k);
+  const body = events.flatMap(e => e.list);
   const singles = rest.filter(i => single[i]).map(i => ({ i, k: prefKey(i) })).sort((a, b) => a.k - b.k).map(o => o.i);
   sellOrder = [...pre, ...body, ...singles];
 }
@@ -1130,7 +1570,7 @@ function closeSeat(i) {
   dot.classList.remove('is-open', 'is-picked');
   dot.classList.add('is-sold');
   dot.setAttribute('fill', SOLD_FILL); dot.setAttribute('stroke', SOLD_FILL);
-  const s = seats[i]; blockLeft[s.bi]--; gradeLeft[s.grade]--; remainDirty = true;
+  const s = seats[i]; blockLeft[s.bi]--; gradeLeft[s.grade]--; zoneLeft[zoneOf[s.bi]]--; remainDirty = true;
 }
 let remainDirty = false;
 function syncSeats() {
@@ -1144,11 +1584,12 @@ let seatActive = false, seatTimer = 0;
 function enterSeat() {
   T.queueEnd = now();
   show('screen-seat');
-  seatActive = true;
+  seatActive = true; gpMode = 'list'; auBusy = false; auResult = null;
+  document.querySelector('.nt-seat-body').classList.remove('au-result');
   resetView();
   sellUpTo(dotsSoldFor(liveSeats()));
   syncSeats();
-  openCaptcha();
+  openNotice();
   startSeatTimer();
 }
 let timerText = '';
@@ -1175,18 +1616,33 @@ function startSeatTimer() {
   tick();
   seatTimer = setInterval(tick, 500);
 }
-function stopSeat() { seatActive = false; clearInterval(seatTimer); }
+function stopSeat() { seatActive = false; clearInterval(seatTimer); $('auLoad').hidden = true; }
 
 /* ─── 확대·이동 ─── */
 const ZOOM = { steps: [6, 12, 24], seatFrom: 6, ms: 300 };
 const view = { z: 1, x: 0, y: 0, fit: 1 };
 let anim = 0, miniShown = false, miniTimer = 0;
 const vp = $('planViewport'), map = $('planMap');
-function fitScale() { return Math.min(vp.clientWidth / VB.w, vp.clientHeight / VB.h); }
+const isMo = () => window.matchMedia('(max-width: 1024px)').matches;
+const PEEK_H = 168;   // 모바일 기본 — 시트가 아래에 이만큼 나와 있다
+let sheet = 'peek';   // peek | open | off
+let sheetAnim = false;
+const sheetPad = () => (isMo() && sheet !== 'off' ? PEEK_H : 0);
+function fitScale() { return Math.min(vp.clientWidth / VB.w, (vp.clientHeight - sheetPad()) / VB.h); }
+function setSheet(st) {
+  sheet = st;
+  const L = $('gradeLayer');
+  L.hidden = st === 'off';
+  L.classList.toggle('is-peek', st === 'peek'); L.classList.toggle('is-open', st === 'open');
+  vp.classList.toggle('sheet-on', st !== 'off');
+  $('zoomFit').classList.toggle('is-shrink', isMo() && st === 'off');
+  if (st !== 'open' && gpMode === 'count') { gpMode = 'list'; renderPanel(); }
+}
 function clampXY(z, x, y) {
   const W = VB.w * z, H = VB.h * z, w = vp.clientWidth, h = vp.clientHeight;
   x = W <= w ? (w - W) / 2 : Math.min(0, Math.max(w - W, x));
-  y = H <= h ? (h - H) / 2 : Math.min(0, Math.max(h - H, y));
+  const ph = sheetPad();
+  y = H <= h - ph ? (h - ph - H) / 2 : Math.min(0, Math.max(h - ph - H, y));
   return [x, y];
 }
 /* 확대·이동 중에는 좌석 1만 5천 개를 매 프레임 다시 그리지 않게 레이어로 고정해 두고, 멈추면 풀어서 선명하게 다시 그린다 */
@@ -1202,7 +1658,10 @@ function paintView() {
   const zoomed = view.z > view.fit + 0.001;
   $('zoomOut').disabled = !zoomed;
   $('zoomIn').disabled = view.z >= ZOOM.steps[ZOOM.steps.length - 1] - 0.001;
-  $('zoomFit').disabled = !zoomed;
+  $('zoomFit').disabled = isMo() ? false : !zoomed;
+  // 모바일: 지도를 키우면 시트가 내려간다
+  if (isMo() && zoomed && sheet !== 'off' && !sheetAnim) { setSheet('off'); view.fit = fitScale(); }
+  $('zoomFit').classList.toggle('is-shrink', isMo() && sheet === 'off');
   $('miniMap').classList.toggle('is-on', zoomed && miniShown);
   if (!zoomed) return;
   const mini = $('miniMap'), mv = $('miniView');
@@ -1229,7 +1688,7 @@ function animateTo(z, x, y) {
   };
   anim = requestAnimationFrame(step);
 }
-function resetView() { view.fit = fitScale(); setView(view.fit, 0, 0); }
+function resetView() { if (isMo()) setSheet('peek'); view.fit = fitScale(); setView(view.fit, 0, 0); }
 function centerOn(mx, my, z) { animateTo(z, vp.clientWidth / 2 - mx * z, vp.clientHeight / 2 - my * z); }
 function toMap(cx, cy) { const r = vp.getBoundingClientRect(); return [(cx - r.left - view.x) / view.z, (cy - r.top - view.y) / view.z]; }
 function zoomAround(z, cx, cy) {
@@ -1250,7 +1709,7 @@ function zoomByButton(dir) {
 const pointers = new Map();
 let drag = null, pinch = null;
 vp.addEventListener('pointerdown', e => {
-  if (e.target.closest('button, .nt-grade-layer, .nt-minimap')) return;
+  if (e.target.closest('button, .nt-grade-layer, .nt-minimap, .nt-price-tip')) return;
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (pointers.size === 1) drag = { sx: e.clientX, sy: e.clientY, vx: view.x, vy: view.y, moved: false };
   else if (pointers.size === 2) {
@@ -1312,7 +1771,14 @@ function onTap(e) {
 }
 $('zoomIn').addEventListener('click', () => zoomByButton(1));
 $('zoomOut').addEventListener('click', () => zoomByButton(-1));
-$('zoomFit').addEventListener('click', () => { flashMiniMap(); animateTo(view.fit, 0, 0); });
+$('zoomFit').addEventListener('click', () => {
+  if (!isMo()) { flashMiniMap(); animateTo(view.fit, 0, 0); return; }
+  // 모바일: 시트가 없으면 → 지도 작게 + 시트 올림 / 시트가 있으면 → 지도 크게 + 시트 내림
+  setSheet(sheet === 'off' ? 'peek' : 'off');
+  view.fit = fitScale(); sheetAnim = true;
+  animateTo(view.fit, 0, 0);
+  setTimeout(() => { sheetAnim = false; }, ZOOM.ms + 50);
+});
 $('miniMap').addEventListener('click', e => { const r = $('miniMap').getBoundingClientRect(); centerOn((e.clientX - r.left) / r.width * VB.w, (e.clientY - r.top) / r.height * VB.h, view.z); });
 window.addEventListener('resize', () => {
   if (!seatActive || anim) return;
@@ -1358,7 +1824,13 @@ function removePicked(i) {
 $('pickedList').addEventListener('click', e => { const li = e.target.closest('.nt-picked-del')?.closest('li'); if (li) removePicked(Number(li.dataset.i)); });
 $('clearBtn').addEventListener('click', () => picked.slice().forEach(removePicked));
 $('sheetArrow').addEventListener('click', () => document.querySelector('.nt-side').classList.toggle('is-open'));
-$('gradeChip').addEventListener('click', () => { $('gradeLayer').hidden = !$('gradeLayer').hidden; });
+$('priceTip').addEventListener('click', e => { if (e.target.closest('.pt-x')) $('priceTip').hidden = true; });
+
+$('priceChip').addEventListener('click', () => {
+  const t = $('priceTip');
+  if (t.hidden) t.innerHTML = `<button type="button" class="pt-x" aria-label="닫기">${ICON_X}</button><ul>` + Object.entries(GRADE).filter(([k]) => gradeTotal[k]).map(([, g]) => `<li><i style="background:${g.color}"></i><span>${g.name}<b>${won(g.price)}</b></span></li>`).join('') + '</ul>';
+  t.hidden = !t.hidden;
+});
 $('blockLayer').addEventListener('pointerover', e => {
   const el = e.target.closest('.blk'); if (!el) return;
   const b = blocks[blockEls.indexOf(el)]; if (!b) return;
@@ -1394,12 +1866,28 @@ function drawCaptcha() {
   g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 2;
   g.beginPath(); g.moveTo(0, H * Math.random()); g.bezierCurveTo(W * .3, H * Math.random(), W * .7, H * Math.random(), W, H * Math.random()); g.stroke();
 }
+function openNotice() { $('noticeDim').hidden = false; $('noticeBox').hidden = false; $('noticeOk').focus({ preventScroll: true }); }
+function closeNotice() { if ($('noticeBox').hidden) return; $('noticeDim').hidden = true; $('noticeBox').hidden = true; if (seatActive) openCaptcha(); }
+$('noticeOk').addEventListener('click', closeNotice);
 function openCaptcha() {
   $('capDim').hidden = false; $('capBox').hidden = false;
   $('capInput').value = ''; $('capErr').textContent = ''; $('capDone').disabled = true;
   drawCaptcha();
-  setTimeout(() => $('capInput').focus(), 30);
+  // 뜨자마자 바로 칠 수 있게 — 화면 전환·확대 애니메이션에 포커스를 뺏기지 않도록 몇 번 다시 잡는다
+  const grab = () => { if (!$('capBox').hidden && document.activeElement !== $('capInput')) $('capInput').focus({ preventScroll: true }); };
+  $('capInput').focus({ preventScroll: true });
+  [0, 60, 200, 450].forEach(ms => setTimeout(grab, ms));
 }
+/* 보안문자 창이 떠 있는 동안 영문을 치면 입력칸이 포커스를 잃었어도 그대로 들어간다 */
+document.addEventListener('keydown', e => {
+  if ($('capBox').hidden || e.target === $('capInput') || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (!/^[a-zA-Z]$/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Enter') return;
+  e.preventDefault();
+  const el = $('capInput'); el.focus({ preventScroll: true });
+  if (e.key === 'Enter') { $('capBox').requestSubmit ? $('capBox').requestSubmit() : $('capDone').click(); return; }
+  el.value = e.key === 'Backspace' ? el.value.slice(0, -1) : (el.value + e.key).slice(0, 6);
+  el.dispatchEvent(new Event('input'));
+});
 /* 영문만 받아 대문자로 바꿔 넣고, 정확히 6자일 때만 입력완료가 켜진다 */
 $('capInput').addEventListener('input', () => {
   const el = $('capInput'), raw = el.value, letters = raw.replace(/[^a-zA-Z]/g, '');
@@ -1430,9 +1918,9 @@ $('doneBtn').addEventListener('click', () => {
   const tickets = picked.reduce((a, i) => a + GRADE[seats[i].grade].price, 0);
   const fee = FEE * picked.length;
   $('cfList').innerHTML = `
-    <div><dt>경기</dt><dd>LG vs 두산</dd></div>
+    <div><dt>경기</dt><dd>${ST.game}</dd></div>
     <div><dt>일시</dt><dd>2026.10.20(화) 6:30 PM</dd></div>
-    <div><dt>장소</dt><dd>잠실야구장</dd></div>
+    <div><dt>장소</dt><dd>${ST.venue}</dd></div>
     <div><dt>좌석</dt><dd>${picked.map(i => `${GRADE[seats[i].grade].name} ${seatName(seats[i])}`).join('<br>')}</dd></div>
     <div><dt>티켓금액</dt><dd>${won(tickets)}</dd></div>
     <div><dt>예매수수료</dt><dd>${won(fee)} (${picked.length}매)</dd></div>`;
@@ -1467,10 +1955,11 @@ function showResult(r) {
     ['좌석', T.captchaEnd != null ? (T.seatDone ?? end) : null, T.captchaEnd],
     ['예매확인', T.confirm, T.seatDone],
   ].map(([nm, a, b]) => [nm, a != null && b != null ? Math.max(0, a - b) : null])
-    .filter(s => s[1] != null && !(s[0] === '대기열' && !T.firstRank));
+    .filter(s => s[1] != null && !(s[0] === '대기열' && !T.firstRank) && !(T.quick && (s[0] === '반응' || s[0] === '대기열')));
   const total = segs.reduce((a, s) => a + s[1], 0);
   const longest = segs.reduce((m, s) => (s[1] > m[1] ? s : m), ['', -1]);
-  const meta = `반응 ${T.reactionMs}ms(${judge(T.reactionMs)}) · ` + (T.firstRank ? `${n(CFG.crowd)}명 중 ${n(T.firstRank)}번에서 출발` : '대기열 진입 전');
+  const meta = T.quick ? `보안문자부터 연습 · ${n(T.firstRank)}번째로 입장${T.autoAssigned ? ' · 자동배정' : ''}`
+    : `반응 ${T.reactionMs}ms(${judge(T.reactionMs)}) · ` + (T.firstRank ? `${n(CFG.crowd)}명 중 ${n(T.firstRank)}번에서 출발` : '대기열 진입 전') + (T.autoAssigned ? ' · 자동배정' : '');
   const extras = [T.preClicks ? `오픈 전 연타 ${T.preClicks}회` : '',
     T.click != null ? `활성화 후 중복 클릭 ${T.postClicks || 0}회` : '',
     T.reclicks ? `재요청 ${T.reclicks}회 · 첫 클릭 ${(T.reactionMs / 1000).toFixed(2)}초 → 마지막 클릭 ${((T.lastClick - T.open) / 1000).toFixed(2)}초` : '',T.netWaitMs ? `몰림 응답 대기 ${(T.netWaitMs / 1000).toFixed(2)}초` : '', T.netErrors ? `접속 오류 ${T.netErrors}회` : '', T.capFails ? `보안문자 오답 ${T.capFails}회` : ''].filter(Boolean).join(' · ');
@@ -1502,11 +1991,12 @@ function showResult(r) {
 }
 
 /* ─── 알림창 ─── */
-function openAlert({ title, msg, cancel }) {
+function openAlert({ title, msg, cancel, ok = '확인', no = '취소' }) {
   return new Promise(res => {
     $('pkt-alert-title').textContent = title; $('pkt-alert-msg').textContent = msg;
+    $('pkt-alert-confirm').textContent = ok; $('pkt-alert-cancel').textContent = no;
     $('pkt-alert-cancel').hidden = !cancel;
-    $('pkt-alert-box').classList.toggle('is-bad', /실패|만료|선점/.test(title));
+    $('pkt-alert-box').classList.toggle('is-bad', /실패|만료|선점|못했/.test(title));
     const ov = $('pkt-alert-overlay'); ov.classList.add('show');
     const done = v => { ov.classList.remove('show'); $('pkt-alert-confirm').onclick = $('pkt-alert-cancel').onclick = null; document.removeEventListener('keydown', key); res(v); };
     const key = e => { if (e.key === 'Enter') { e.preventDefault(); done(true); } };
@@ -1519,6 +2009,147 @@ function openAlert({ title, msg, cancel }) {
 const showAlert = o => openAlert({ ...o, cancel: false });
 const showConfirm = o => openAlert({ ...o, cancel: true });
 
+/* ─── 보안문자부터 연습 — 5,000번 이하 무작위 순번으로 입장한 상태에서 시작 ─── */
+const QUICK_RANK = [1, 5000];
+$('quickBtn').addEventListener('click', () => {
+  if (phaseIntro !== 'idle') return;
+  phaseIntro = 'quick';
+  $('startDim').hidden = true; $('quickBtn').hidden = true;
+  const rank = QUICK_RANK[0] + Math.floor(Math.random() * (QUICK_RANK[1] - QUICK_RANK[0]));
+  $('readyRank').innerHTML = `대기 순번은 <b>5,000번 이하에서 무작위</b>로 정해져요.<br>이번 순번 <b>${n(rank)}번</b> — 그 앞사람들이 이미 산 만큼 좌석이 줄어 있어요.`;
+  let c = 3; $('readyNum').textContent = c; $('readyDim').hidden = false;
+  const iv = setInterval(() => {
+    c--;
+    if (c > 0) { $('readyNum').textContent = c; return; }
+    clearInterval(iv); $('readyDim').hidden = true;
+    const t = now();
+    T.quick = true; T.firstRank = rank; T.open = t; T.click = t; T.reactionMs = 0;
+    Q.rank = rank; Q.entered = true; Q.enterAt = t; Q.seatsAtEntry = Math.max(0, Math.round(seatsAfter(rank - 1)));
+    enterSeat();
+  }, 1000);
+});
+
+/* ─── 관람 구역 선택 · 자동배정 — 실제 예매 화면과 같은 흐름 ───
+   구역(등급) 선택 → [자동 배정받기 | 직접 좌석 선택하기]
+   자동: 매수 선택 → 배정 중 → (성공) 좌석 n개 배정 → 확인 완료 → 예매확인
+                              (실패) 계속 시도(n/3) | 다른 구역 선택하기 */
+let rowsOf = null;
+function buildRows() {
+  rowsOf = new Map();
+  seats.forEach((s, i) => { const k = `${s.bi}-${s.row}`; (rowsOf.get(k) || rowsOf.set(k, []).get(k)).push(i); });
+  rowsOf.forEach(a => a.sort((x, y) => seats[x].col - seats[y].col));
+}
+const isFree = i => !sold.has(i) && !seatEls[i].classList.contains('is-sold') && !picked.includes(i);
+/* 그 구역에서 지금 비어 있는 '붙은 k석' 후보 전부 — 실제처럼 순서를 섞어서 차례로 시도한다 */
+function allRuns(grade, k) {
+  if (!rowsOf) buildRows();
+  const out = [];
+  rowsOf.forEach(a => {
+    if (zoneOf[seats[a[0]].bi] !== grade) return;
+    for (let x = 0; x + k <= a.length; x++) {
+      let ok = true;
+      for (let y = 0; y < k; y++) { const i = a[x + y]; if (!isFree(i) || (y && seats[i].col !== seats[a[x + y - 1]].col + 1)) { ok = false; break; } }
+      if (ok) out.push(a.slice(x, x + k));
+    }
+  });
+  for (let x = out.length - 1; x > 0; x--) { const y = Math.floor(Math.random() * (x + 1)); [out[x], out[y]] = [out[y], out[x]]; }
+  return out;
+}
+/* 시트 손잡이·제목을 위로 끌면 펼치고, 아래로 끌면 접는다 */
+(() => {
+  let y0 = null, moved = false;
+  $('gradeLayer').addEventListener('pointerdown', e => { if (e.target.closest('.gp-head, .as-head, .gp-x')) { y0 = e.clientY; moved = false; } });
+  window.addEventListener('pointermove', e => { if (y0 !== null && Math.abs(e.clientY - y0) > 6) moved = true; });
+  window.addEventListener('pointerup', e => {
+    if (y0 === null) return;
+    const dy = e.clientY - y0; y0 = null;
+    if (!moved) return;
+    if (dy < -30) setSheet('open'); else if (dy > 30) setSheet('peek');
+    sheetDragged = true; setTimeout(() => { sheetDragged = false; }, 0);
+  });
+})();
+let sheetDragged = false;
+['gradeLayer', 'remainSide'].forEach(id => $(id).addEventListener('click', e => {
+  if (sheetDragged) return;
+  const z = e.target.closest('[data-zone]');
+  if (z) { selGrade = z.dataset.zone; renderPanel(); if (isMo() && sheet !== 'open') setSheet('open'); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a || a.disabled) return;
+  const act = a.dataset.act;
+  if (act === 'close') { setSheet(sheet === 'open' ? 'peek' : 'open'); return; }
+  if (act === 'back') { gpMode = 'list'; renderPanel(); return; }
+  if (act === 'minus' || act === 'plus') { auCount = Math.min(MAX_PICK, Math.max(0, auCount + (act === 'plus' ? 1 : -1))); renderPanel(); return; }
+  if (act === 'confirm') { finishResult(); return; }
+  if (!$('capBox').hidden) { showHint('보안문자를 먼저 입력해주세요'); return; }
+  if (act === 'go') { runAuto(); return; }
+  if (!selGrade) return;
+  if (act === 'direct') { directSelect(selGrade); }
+  else openCount(selGrade);
+}));
+/* 직접 좌석 선택하기 — 그 구역에서 남은 자리가 가장 많은 블록으로 이동 */
+function directSelect(grade) {
+  let bi = -1;
+  blocks.forEach((b, i) => { if (zoneOf[i] === grade && blockLeft[i] > 0 && (bi < 0 || blockLeft[i] > blockLeft[bi])) bi = i; });
+  if (bi < 0) return;
+  const b = blocks[bi], t = TIER[b.tier], mid = (b.a0 + b.a1) / 2;
+  const [x, y] = P((t.rin(mid) + t.rout(mid)) / 2, mid);
+  centerOn(x, y, ZOOM.steps[0]);
+  showHint(`${zoneBy(grade).name} ${b.name}로 이동했어요`);
+}
+const MAX_PICK = 4;   // 인당 최대 4매
+let auGrade = null, auCount = 2, auRetry = 0, auBusy = false;
+function openCount(grade) { auGrade = grade; auCount = 0; auRetry = 0; gpMode = 'count'; renderPanel(); }
+const wait = ms => new Promise(r => setTimeout(r, ms));
+/* 후보를 차례로 요청한다. 화면엔 비어 보여도 그 사이 다른 사람이 먼저 잡으면 실패하고 다음 후보로 — 남은 자리가 적을수록 자주 실패 */
+async function tryAssign(grade, k) {
+  await wait(500 + Math.random() * 700);
+  const cands = allRuns(grade, k);
+  for (let a = 0; a < Math.min(3, cands.length); a++) {
+    await wait(600 + Math.random() * 700);
+    if (!seatActive) return null;
+    const run = cands[a];
+    if (!run.every(isFree)) continue;
+    const ratio = Math.max(0, zoneLeft[grade]) / zoneTotal[grade];
+    if (Math.random() < Math.min(0.6, 0.15 + (1 - ratio) * 0.5)) continue;
+    return run;
+  }
+  return null;
+}
+let auBottomT = 0;
+async function runAuto() {
+  if (auBusy || !seatActive) return;
+  auBusy = true; $('auLoad').hidden = false; $('auBottom').classList.remove('on');
+  clearTimeout(auBottomT); auBottomT = setTimeout(() => $('auBottom').classList.add('on'), 3000);
+  const run = await tryAssign(auGrade, auCount);
+  clearTimeout(auBottomT); $('auLoad').hidden = true; auBusy = false;
+  if (!seatActive) return;
+  if (run) {
+    picked.slice().forEach(removePicked);
+    CFG.want = auCount;   // 이번 예매 매수 (설정 저장값은 그대로)
+    run.forEach(i => { picked.push(i); seatEls[i].classList.remove('is-open'); seatEls[i].classList.add('is-picked'); });
+    renderPicked();
+    T.autoAssigned = true;
+    auResult = run; gpMode = 'result';
+    document.querySelector('.nt-seat-body').classList.add('au-result');
+    renderPanel(); if (isMo()) setSheet('open');
+    return;
+  }
+  auRetry++;
+  if (auRetry > 3) {
+    auRetry = 0;
+    await openAlert({ title: '자동 배정 가능한 좌석을 찾지 못했어요', msg: '다른 구역을 선택해 보세요' });
+    gpMode = 'list'; selGrade = null; renderPanel(); return;
+  }
+  const again = await openAlert({ title: '자동 배정 가능한 좌석을 찾지 못했어요', msg: '계속 시도하거나 다른 구역을 선택해 보세요.', cancel: true, ok: `계속 시도(${auRetry}/3)`, no: '다른 구역 선택하기' });
+  if (again) runAuto();
+  else { auRetry = 0; gpMode = 'list'; selGrade = null; renderPanel(); }
+}
+function finishResult() {
+  document.querySelector('.nt-seat-body').classList.remove('au-result');
+  gpMode = 'list'; selGrade = null; auResult = null; renderPanel();
+  if (seatActive) $('doneBtn').click();
+}
+
 /* ─── 연습 규칙 시트 ─── */
 document.querySelectorAll('[data-rule]').forEach(b => b.addEventListener('click', () => { $('ruleDim').hidden = false; $('ruleDim').querySelector('.in-card').scrollTop = 0; }));
 $('ruleClose').addEventListener('click', () => { $('ruleDim').hidden = true; });
@@ -1526,6 +2157,7 @@ $('ruleDim').addEventListener('click', e => { if (e.target === $('ruleDim')) $('
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $('ruleDim').hidden = true; });
 
 /* ─── 시작 ─── */
+useStadium(CFG.stadium);
 paintCfg();
 $('recLine').textContent = recLine();
 buildPlan();   // 좌석은 미리 다 그려둔다. 좌석 화면 진입 때 멈칫하지 않게
