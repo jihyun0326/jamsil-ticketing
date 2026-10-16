@@ -180,7 +180,8 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 .nt-sub-title, .nt-sub-div, .nt-sub-date, .nt-sub-chip { display: none }
 .nt-mo-title { flex: 1 1 0; min-width: 0; font-size: 18px; font-weight: 700; line-height: 22px }
 .nt-help { flex-shrink: 0; width: 20px; height: 20px; border: 1.4px solid var(--nt-sub); border-radius: 50%; color: var(--nt-sub); font-size: 12px; font-weight: 700; line-height: 1; }
-.nt-close { flex-shrink: 0; width: 24px; height: 24px; color: var(--nt-ink) }
+.nt-close { position: relative; z-index: 14; flex-shrink: 0; width: 24px; height: 24px; color: var(--nt-ink) }   /* 예매 안내·보안문자 배경보다 위 — 언제든 예매 취소 */
+.nt-close::before { content: ""; position: absolute; inset: -10px }   /* 누르는 영역을 넓게 */
 .nt-close svg { width: 100%; height: 100% }
 .nt-help-tip { position: absolute; top: 46px; right: 12px; z-index: 30; width: 268px; padding: 12px 14px; border-radius: 10px; background: #2b2d33; color: #fff; text-align: left; }
 .nt-help-tip strong { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 700 }
@@ -666,7 +667,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
           <tr><td>보고 누름</td><td>약 0.3초 전후</td><td>40~45%</td></tr>
           <tr><td>늦게 들어옴</td><td>0.6초 이후</td><td>나머지</td></tr>
         </table></div>
-        <ul style="margin-top:8px"><li>입장 속도는 초당 400명이에요. '10배 빠르게'면 초당 4,000명이에요.</li></ul>
+        <ul style="margin-top:8px"><li>입장 속도는 초당 약 17명이에요 (실제 4만번대가 약 40분 뒤 입장). '10배 빠르게'면 초당 약 170명이에요.</li></ul>
       </section>
 
       <section class="rl-sec"><h3><i>5</i>좌석이 팔리는 방식</h3><ul>
@@ -683,7 +684,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
           <tr><td>약 6,800번째</td><td>2연석 마감 · 이후 흩어진 단석만</td></tr>
           <tr><td>약 8,900번째</td><td>완전 매진</td></tr>
         </table></div>
-        <ul style="margin-top:8px"><li>기준은 실제 사례 하나예요. 와일드카드 예매 때 7000번대에서 2연석을 못 잡았어요.</li><li>내가 입장한 뒤에도 초당 150석(단석만 남으면 40석)씩 계속 팔려요.</li></ul>
+        <ul style="margin-top:8px"><li>기준은 실제 사례 하나예요. 와일드카드 예매 때 7000번대에서 2연석을 못 잡았어요.</li><li>내가 입장한 뒤에도 초당 약 39석(단석만 남으면 약 19석)씩 계속 팔려요. 초당 17명이 새로 들어와 사가는 속도예요.</li></ul>
       </section>
 
       <section class="rl-sec"><h3><i>+</i>보안문자부터 연습 · 자동배정</h3><ul>
@@ -913,12 +914,12 @@ const ALMOST_PERCENT = 90;
 const FEE = 2000;
 
 /* ═══ 대기열 · 좌석 소진 모델 (연습용 가정) ═══
-   - 일반 예매로 풀리는 좌석은 전체의 약 76%, 입장 속도 초당 400명 (참고 페이지)
+   - 일반 예매로 풀리는 좌석은 전체의 약 76%, 입장 속도 초당 약 17명 (실제: 4만번대가 약 40분 뒤 입장)
    - 실제 결과 보정: 와일드카드 때 7000번대는 2연석을 못 잡았다
      → 2연석은 약 6,800번째 입장자에서 끝나고, 단석까지 약 8,900번째에서 매진
      → 좌석도에서는 4연석이 약 6,000번째, 3연석이 약 6,300번째쯤 먼저 사라진다
    - 연석이 남은 동안 입장자 1명당 약 2.3석, 단석만 남은 뒤엔 약 1.1석씩 팔린다 */
-const PUBLIC = 0.757, RATE = 400, SINGLE_PER_ENTRY = 1.1;
+const PUBLIC = 0.757, RATE = 17, SINGLE_PER_ENTRY = 1.1;
 const STADIUM_SEATS_BY = { jamsil: 23750, gwangju: 20500 };   // 챔피언스필드는 잠실 기준값을 좌석 수 비율로 줄였다
 let STADIUM_SEATS, SEATS, PAIR_CUT_AT, SOLDOUT_AT, SCATTER, SEATS_PER_ENTRY;
 function applyModel(key) {
@@ -930,7 +931,7 @@ function applyModel(key) {
   SEATS_PER_ENTRY = SEATS * (1 - SCATTER) / PAIR_CUT_AT;
 }
 applyModel(CFG.stadium);
-const CAP_DRAIN = 150, CAP_DRAIN_SINGLE = 40;   // 입장 뒤에도 앞사람들이 결제를 마치며 초당 빠지는 좌석
+const CAP_DRAIN = RATE * 2.3, CAP_DRAIN_SINGLE = RATE * SINGLE_PER_ENTRY;   // 입장 뒤에도 초당 들어오는 사람(17명)이 사가는 좌석 — 연석 남은 동안 약 39석, 단석만 남으면 약 19석
 const pairCut = () => SEATS * (1 - SCATTER) / SEATS_PER_ENTRY;
 function seatsAfter(entered) {
   const e1 = pairCut();
@@ -1138,7 +1139,7 @@ function startQueue(rank) {
   render();
   const timer = setInterval(render, 100);
 }
-/* 입장 뒤 남은 좌석 — 연석 구간은 초당 150석, 단석만 남으면 초당 40석씩 빠진다 (실제 시간 기준) */
+/* 입장 뒤 남은 좌석 — 연석 구간은 초당 약 39석, 단석만 남으면 초당 약 19석씩 빠진다 (실제 시간 기준) */
 function liveSeats() {
   if (!Q.entered) return Q.seatsNow;
   const t = (now() - Q.enterAt) / 1000, s = Q.seatsAtEntry, cut = SEATS * SCATTER;
