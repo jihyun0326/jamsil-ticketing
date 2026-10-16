@@ -40,8 +40,8 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 .in-btn { margin-top: 44px; width: min(560px, 100%); height: 56px; border-radius: 16px; background: var(--nt-locked-bg); color: var(--nt-locked-ink); font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums }
 .in-btn.is-open { background: linear-gradient(180deg, #3d8bff 0%, #2b74ec 100%); color: #fff; box-shadow: 0 10px 24px rgba(49,130,246,.35) }
 .in-btn.is-locked { cursor: default }
-.in-btn.is-loading { position: relative; color: transparent }
-.in-btn.is-loading::after { content: ""; position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 3px solid rgba(255,255,255,.45); border-top-color: #fff; animation: nt-spin .8s linear infinite }
+.in-btn.is-loading { position: relative; color: transparent; cursor: progress }   /* 놀 예매 버튼 로딩 — 글자 대신 스피너 */
+.in-btn.is-loading::after { content: ""; position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; box-sizing: border-box; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: nt-spin .8s linear infinite }
 .in-clock { margin-top: 10px; font-family: 'Roboto Mono', ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 500; color: #8b95a1; text-align: center; font-variant-numeric: tabular-nums }
 .in-clock.is-open { color: #3182f6 }
 .in-note { margin-top: 12px; font-size: 11.5px; color: #b0b4bf; text-align: center }
@@ -650,13 +650,13 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 
       <section class="rl-sec"><h3><i>2</i>예매하기 버튼</h3><ul>
         <li>남은시간 <b>00:00이 1초 표시된 뒤</b> 버튼이 켜져요.</li>
-        <li>켜지기 전 클릭은 반영되지 않고, 결과에 '오픈 전 연타'로만 남아요.</li>
-        <li>반응속도는 버튼이 켜진 순간부터 첫 클릭까지예요. <b>150ms 이하 빠름 · 300ms 이하 보통 · 그 이상 늦음</b></li>
+        <li>판정은 <b>손을 뗄 때</b>예요. 누른 순간이 켜지기 전이면 켜진 뒤에 떼도 무시되고, 결과에 '오픈 전 연타'로만 남아요.</li>
+        <li>반응속도는 버튼이 켜진 순간부터 첫 클릭(손 뗀 순간)까지예요. <b>150ms 이하 빠름 · 300ms 이하 보통 · 그 이상 늦음</b></li>
       </ul></section>
 
       <section class="rl-sec"><h3><i>3</i>접속자 몰림</h3><ul>
         <li>켜면 클릭 후 화면이 바로 넘어가지 않고 멈춰 있어요. 보통 <b>1.0초(정규) ~ 1.8초(KS)</b>, 드물게 최대 6초.</li>
-        <li>기다리는 중 다시 누르면 앞 요청은 취소되고, <b>마지막으로 누른 시각 기준</b>으로 순번이 다시 정해져요.</li>
+        <li>기다리는 동안 버튼에 로딩 표시가 나오고, <b>첫 클릭만 유효</b>해요. 더 눌러도 무시돼요.</li>
         <li>0.2~1% 확률로 접속 오류가 나요. '오류가 발생했습니다.' 알림을 닫고 1초 뒤부터 예매하기를 다시 누를 수 있고, 다시 누른 시각 기준으로 순번이 정해져요.</li>
       </ul></section>
 
@@ -1052,15 +1052,9 @@ $('bookBtn').addEventListener('click', e => {
   if (phaseIntro === 'idle') { $('startDim').hidden = false; return; }   // 설정을 닫았으면 다시 연다
   if (phaseIntro === 'count' && now() >= openAt) tickIntro();
   if (phaseIntro === 'count' || pressedEarly) { pressedEarly = false; return; }
-  /* 몰림으로 응답이 늦는 동안 예매하기를 또 누르면 앞 요청은 버려지고 새 요청이 들어간다.
-     순번은 마지막으로 누른 시각 기준으로 다시 정해지고, 응답 대기도 처음부터 다시 걸린다 */
-  if (phaseIntro === 'clicked') {
-    if (!$('screen-intro').classList.contains('is-active')) return;
-    T.reclicks = (T.reclicks || 0) + 1;
-    T.lastClick = now();
-    requestEntry((T.lastClick - T.open) / 1000, true);
-    return;
-  }
+  /* 놀과 같이 첫 클릭만 유효 — 접수되면 응답이 올 때까지 버튼은 로딩 상태이고 더 눌러도 무시된다
+     (누른 횟수는 결과의 '활성화 후 중복 클릭'으로만 센다) */
+  if (phaseIntro === 'clicked') return;
   if (phaseIntro === 'error') return;   // 오류 알림을 닫고 1초 지나기 전
   if (phaseIntro === 'retry') {   // 오류 뒤 다시 누름 — 누른 시각 기준으로 순번이 다시 정해진다
     phaseIntro = 'clicked'; T.lastClick = now();
