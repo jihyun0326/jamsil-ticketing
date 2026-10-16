@@ -1039,12 +1039,18 @@ function tickIntro() {
   }
   $('bookBtn').textContent = `남은시간 00:${pad2(Math.max(0, Math.ceil(left / 1000) - 1))}`;
 }
-/* 예매하기 — 켜지기 전 클릭은 무시하고, 켜진 뒤 첫 클릭만 반영한다 */
-$('bookBtn').addEventListener('pointerdown', e => {
+/* 예매하기 — 켜지기 전 클릭은 무시하고, 켜진 뒤 첫 클릭만 반영한다 (판정은 손을 뗄 때) */
+/* 놀과 같이 손을 뗄 때(click) 판정한다. 누른 순간이 활성화 전이면 떼는 순간과 상관없이 무시 */
+let pressedEarly = false;
+$('bookBtn').addEventListener('pointerdown', () => {
+  if (phaseIntro === 'count' && now() >= openAt) tickIntro();   // 정각은 지났는데 화면 갱신 전이면 지금 연다
+  pressedEarly = phaseIntro === 'count';
+  if (pressedEarly) preClicks++;
+});
+$('bookBtn').addEventListener('click', e => {
   if (phaseIntro === 'idle') { $('startDim').hidden = false; return; }   // 설정을 닫았으면 다시 연다
-  // 코드상 정각에 활성화 — 정각이 지났으면(색이 아직 안 바뀌었어도) 접수, 정각 전 클릭은 무시
   if (phaseIntro === 'count' && now() >= openAt) tickIntro();
-  if (phaseIntro === 'count') { preClicks++; return; }
+  if (phaseIntro === 'count' || pressedEarly) { pressedEarly = false; return; }
   /* 몰림으로 응답이 늦는 동안 예매하기를 또 누르면 앞 요청은 버려지고 새 요청이 들어간다.
      순번은 마지막으로 누른 시각 기준으로 다시 정해지고, 응답 대기도 처음부터 다시 걸린다 */
   if (phaseIntro === 'clicked') {
