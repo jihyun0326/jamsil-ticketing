@@ -650,7 +650,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 
       <section class="rl-sec"><h3><i>2</i>예매하기 버튼</h3><ul>
         <li>남은시간 <b>00:00이 1초 표시된 뒤</b> 버튼이 켜져요.</li>
-        <li>판정은 <b>손을 뗄 때</b>예요. 누른 순간이 켜지기 전이면 켜진 뒤에 떼도 무시되고, 결과에 '오픈 전 연타'로만 남아요.</li>
+        <li>놀과 같이 <b>오픈 5분 전부터 초당 60번</b> 켜졌는지 확인해요. 그래서 정각 뒤 아주 잠깐(약 0.02~0.03초) 지나서 켜져요.</li><li>판정은 <b>손을 뗄 때</b>예요. 켜지기 전에 누르고 뗀 클릭은 무시되고 '오픈 전 연타'로 남아요. 켜지기 전에 눌렀어도 <b>켜진 뒤에 떼면 접수</b>돼요 (놀과 같은 브라우저 기본 동작).</li>
         <li>반응속도는 버튼이 켜진 순간부터 첫 클릭(손 뗀 순간)까지예요. <b>150ms 이하 빠름 · 300ms 이하 보통 · 그 이상 늦음</b></li>
       </ul></section>
 
@@ -999,12 +999,29 @@ $('startBtn').addEventListener('click', () => {
   preClicks = 0;
   /* 남은 시간을 버려서 찍는다 — 05→00 이 1초씩 서고, 00:00 도 1초 선 뒤에 열린다 */
   openAt = now() + (CFG.open + 1) * 1000;
-  clearInterval(introTimer);
-  introTimer = setInterval(tickIntro, 20);
-  // 정각에 정확히 활성화 — 20ms 간격 확인을 기다리지 않는다
-  clearTimeout(openTimer); openTimer = setTimeout(tickIntro, Math.max(0, openAt - now()));
-  tickIntro(); paintClock();
+  $('bookBtn').disabled = true;   // 놀처럼 진짜 비활성 버튼
+  introTick(); startIntroTicker(); paintClock();
 });
+/* 놀과 같은 확인 주기 — 화면 프레임마다 보되 오픈 5분 전부터는 초당 60번, 그 전엔 초당 2번만 다시 계산한다.
+   (놀 코드: 직전 계산 뒤 1000/fps ms를 넘긴 프레임에서만 계산. 탭이 안 보이면 멈췄다가 다시 보이면 이어서) */
+let introRaf = 0, introLast = 0, introFps = 2;   // 놀 기본값도 초당 2번
+function introTick() {
+  tickIntro();
+  // 놀처럼 계산할 때마다 다음 주기를 정한다 — 오픈 전 5분 안이면 60, 아니면 2 (정각을 넘긴 계산 뒤에야 2로 내려간다)
+  const left = openAt - now();
+  introFps = left > 0 && left < 3e5 ? 60 : 2;
+}
+function startIntroTicker() {
+  cancelAnimationFrame(introRaf); introLast = performance.now();
+  const loop = () => {
+    if (phaseIntro !== 'count') return;
+    const t = performance.now();
+    if (t - introLast > 1000 / introFps) { introLast = t; introTick(); }
+    if (phaseIntro === 'count') introRaf = requestAnimationFrame(loop);
+  };
+  introRaf = requestAnimationFrame(loop);
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && phaseIntro === 'count') startIntroTicker(); });
 /* 참고용 밀리초 시계 — '00분 00초 000'이 되는 순간이 정각(활성화) */
 let openTimer = 0, clockRaf = 0;
 function fmtClock(d) {
@@ -1034,6 +1051,7 @@ function tickIntro() {
     phaseIntro = 'open';
     clearInterval(introTimer);
     T.open = openAt;
+    $('bookBtn').disabled = false;
     $('bookBtn').textContent = '예매하기';
     $('bookBtn').className = 'in-btn is-open';
     return;
@@ -1041,17 +1059,14 @@ function tickIntro() {
   $('bookBtn').textContent = `남은시간 00:${pad2(Math.max(0, Math.ceil(left / 1000) - 1))}`;
 }
 /* 예매하기 — 켜지기 전 클릭은 무시하고, 켜진 뒤 첫 클릭만 반영한다 (판정은 손을 뗄 때) */
-/* 놀과 같이 손을 뗄 때(click) 판정한다. 누른 순간이 활성화 전이면 떼는 순간과 상관없이 무시 */
-let pressedEarly = false;
-$('bookBtn').addEventListener('pointerdown', () => {
-  if (phaseIntro === 'count' && now() >= openAt) tickIntro();   // 정각은 지났는데 화면 갱신 전이면 지금 연다
-  pressedEarly = phaseIntro === 'count';
-  if (pressedEarly) preClicks++;
-});
+/* 놀과 같이 진짜 비활성 버튼 + 손을 뗄 때(click) 판정.
+   켜지기 전에 누르고 켜지기 전에 떼면 무시, 켜지기 전에 눌렀어도 켜진 뒤에 떼면 접수된다 (브라우저 기본 동작 — 실측) */
+window.addEventListener('pointerdown', e => {   // 비활성일 때 누른 횟수 — 결과의 '오픈 전 연타'
+  if (phaseIntro === 'count' && e.target.closest && e.target.closest('#bookBtn')) preClicks++;
+}, true);
 $('bookBtn').addEventListener('click', e => {
   if (phaseIntro === 'idle') { $('startDim').hidden = false; return; }   // 설정을 닫았으면 다시 연다
-  if (phaseIntro === 'count' && now() >= openAt) tickIntro();
-  if (phaseIntro === 'count' || pressedEarly) { pressedEarly = false; return; }
+  if (phaseIntro === 'count') return;
   /* 놀과 같이 첫 클릭만 유효 — 접수되면 응답이 올 때까지 버튼은 로딩 상태이고 더 눌러도 무시된다
      (누른 횟수는 결과의 '활성화 후 중복 클릭'으로만 센다) */
   if (phaseIntro === 'clicked') return;
