@@ -40,6 +40,8 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 .in-btn { margin-top: 44px; width: min(560px, 100%); height: 56px; border-radius: 16px; background: var(--nt-locked-bg); color: var(--nt-locked-ink); font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums }
 .in-btn.is-open { background: linear-gradient(180deg, #3d8bff 0%, #2b74ec 100%); color: #fff; box-shadow: 0 10px 24px rgba(49,130,246,.35) }
 .in-btn.is-locked { cursor: default }
+.in-btn.is-loading { position: relative; color: transparent }
+.in-btn.is-loading::after { content: ""; position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; border: 3px solid rgba(255,255,255,.45); border-top-color: #fff; animation: nt-spin .8s linear infinite }
 .in-clock { margin-top: 10px; font-family: 'Roboto Mono', ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 500; color: #8b95a1; text-align: center; font-variant-numeric: tabular-nums }
 .in-clock.is-open { color: #3182f6 }
 .in-note { margin-top: 12px; font-size: 11.5px; color: #b0b4bf; text-align: center }
@@ -655,7 +657,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
       <section class="rl-sec"><h3><i>3</i>접속자 몰림</h3><ul>
         <li>켜면 클릭 후 화면이 바로 넘어가지 않고 멈춰 있어요. 보통 <b>1.0초(정규) ~ 1.8초(KS)</b>, 드물게 최대 6초.</li>
         <li>기다리는 중 다시 누르면 앞 요청은 취소되고, <b>마지막으로 누른 시각 기준</b>으로 순번이 다시 정해져요.</li>
-        <li>0.2~1% 확률로 접속 오류가 나요. '다시 시도'를 누른 시각 기준으로 순번이 다시 정해져요.</li>
+        <li>0.2~1% 확률로 접속 오류가 나요. '오류가 발생했습니다.' 알림을 닫고 1초 뒤부터 예매하기를 다시 누를 수 있고, 다시 누른 시각 기준으로 순번이 정해져요.</li>
       </ul></section>
 
       <section class="rl-sec"><h3><i>4</i>대기 순번</h3><ul>
@@ -1059,6 +1061,12 @@ $('bookBtn').addEventListener('click', e => {
     requestEntry((T.lastClick - T.open) / 1000, true);
     return;
   }
+  if (phaseIntro === 'error') return;   // 오류 알림을 닫고 1초 지나기 전
+  if (phaseIntro === 'retry') {   // 오류 뒤 다시 누름 — 누른 시각 기준으로 순번이 다시 정해진다
+    phaseIntro = 'clicked'; T.lastClick = now();
+    requestEntry((T.lastClick - T.open) / 1000, true);
+    return;
+  }
   if (phaseIntro !== 'open') return;
   e.preventDefault();
   phaseIntro = 'clicked';
@@ -1090,16 +1098,17 @@ function requestEntry(arrivalSec, fromIntro) {
   const rank = () => rankFor(arrivalSec + 0.012);   // 내 네트워크 지연 포함
   if (!CFG.overload) { showChecking(); setTimeout(() => alive() && startQueue(rank()), LOADING_MS); return; }
   if (!fromIntro) showChecking();
+  else { $('bookBtn').classList.add('is-loading'); $('bookBtn').setAttribute('aria-busy', 'true'); }   // 놀처럼 응답 올 때까지 버튼에 로딩 표시
   const lv = level(), lat = sampleLat(lv), fail = Math.random() < lv.err;
   T.netWaitMs = (T.netWaitMs || 0) + Math.round(lat * 1000);
   setTimeout(() => {
     if (!alive()) return;
+    $('bookBtn').classList.remove('is-loading'); $('bookBtn').removeAttribute('aria-busy');
     if (!fail) { showChecking(); setTimeout(() => alive() && startQueue(rank()), LOADING_MS); return; }
-    show('screen-loading');
-    $('loadSpin').hidden = true; $('retryBtn').hidden = false;
-    $('loadL1').textContent = '접속자가 많아 연결이 지연되고 있어요.';
-    $('loadL2').textContent = '잠시 후 다시 시도해 주세요.';
+    // 오류 — 놀처럼 같은 페이지에서 알림. 닫고 1초 뒤부터 예매하기를 다시 누를 수 있다
     T.netErrors = (T.netErrors || 0) + 1;
+    phaseIntro = 'error';
+    openAlert({ title: '오류가 발생했습니다.', msg: '' }).then(() => setTimeout(() => { if (phaseIntro === 'error') phaseIntro = 'retry'; }, 1000));
   }, lat * 1000);
 }
 /* 다시 시도한 시점 기준으로 순번이 다시 매겨진다 */
@@ -2013,10 +2022,10 @@ function showResult(r) {
   const total = segs.reduce((a, s) => a + s[1], 0);
   const longest = segs.reduce((m, s) => (s[1] > m[1] ? s : m), ['', -1]);
   const meta = T.quick ? `보안문자부터 연습 · ${n(T.firstRank)}번째로 입장${T.autoAssigned ? ' · 자동배정' : ''}`
-    : `반응 ${T.reactionMs}ms(${judge(T.reactionMs)}) · ` + (T.firstRank ? `${n(CFG.crowd)}명 중 ${n(T.firstRank)}번에서 출발` : '대기열 진입 전') + (T.autoAssigned ? ' · 자동배정' : '');
+    : `반응 ${T.reactionMs}ms(${judge(T.reactionMs)}) · ` + (T.click != null ? `클릭 시각 ${fmtClock(T.click - T.open)} · ` : '') + (T.firstRank ? `${n(CFG.crowd)}명 중 ${n(T.firstRank)}번에서 출발` : '대기열 진입 전') + (T.autoAssigned ? ' · 자동배정' : '');
   const extras = [T.preClicks ? `오픈 전 연타 ${T.preClicks}회` : '',
     T.click != null ? `활성화 후 중복 클릭 ${T.postClicks || 0}회` : '',
-    T.reclicks ? `재요청 ${T.reclicks}회 · 첫 클릭 ${(T.reactionMs / 1000).toFixed(2)}초 → 마지막 클릭 ${((T.lastClick - T.open) / 1000).toFixed(2)}초` : '',T.netWaitMs ? `몰림 응답 대기 ${(T.netWaitMs / 1000).toFixed(2)}초` : '', T.netErrors ? `접속 오류 ${T.netErrors}회` : '', T.capFails ? `보안문자 오답 ${T.capFails}회` : ''].filter(Boolean).join(' · ');
+    T.reclicks ? `재요청 ${T.reclicks}회 · 첫 클릭 ${fmtClock(T.click - T.open)} → 마지막 클릭 ${fmtClock(T.lastClick - T.open)}` : '',T.netWaitMs ? `몰림 응답 대기 ${(T.netWaitMs / 1000).toFixed(2)}초` : '', T.netErrors ? `접속 오류 ${T.netErrors}회` : '', T.capFails ? `보안문자 오답 ${T.capFails}회` : ''].filter(Boolean).join(' · ');
   const grade = ms => { const v = ms / 1000; return v <= 7 ? 'S+' : v <= 10 ? 'S' : v <= 14 ? 'A' : v <= 20 ? 'B' : 'C'; };
   const sec = ms => (ms / 1000).toFixed(2) + '초';
   const rec = loadRec(), last10 = rec.reactions.slice(-10);
