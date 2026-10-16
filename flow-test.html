@@ -40,6 +40,8 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 .in-btn { margin-top: 44px; width: min(560px, 100%); height: 56px; border-radius: 16px; background: var(--nt-locked-bg); color: var(--nt-locked-ink); font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums }
 .in-btn.is-open { background: linear-gradient(180deg, #3d8bff 0%, #2b74ec 100%); color: #fff; box-shadow: 0 10px 24px rgba(49,130,246,.35) }
 .in-btn.is-locked { cursor: default }
+.in-clock { margin-top: 10px; font-family: 'Roboto Mono', ui-monospace, Menlo, monospace; font-size: 13px; font-weight: 500; color: #8b95a1; text-align: center; font-variant-numeric: tabular-nums }
+.in-clock.is-open { color: #3182f6 }
 .in-note { margin-top: 12px; font-size: 11.5px; color: #b0b4bf; text-align: center }
 @media (max-width: 600px) { .in-title { margin-top: max(10vh, 72px) } .in-poster { margin-top: 34px } .in-btn { margin-top: 36px } }
 
@@ -561,6 +563,9 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
   .nt-plan.sheet-on .nt-price-tip { bottom: 234px }
   .nt-grade-layer .gp-head, .nt-grade-layer .as-head, .nt-grade-layer .gp-x { touch-action: none }
 }
+.nt-wait-x { position: fixed; z-index: 5; top: calc(12px + env(safe-area-inset-top, 0px)); right: 12px; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #1b1c1f }
+.nt-wait-x:hover { background: rgba(0,0,0,.05) }
+.nt-wait-x svg { width: 22px; height: 22px }
 </style>
 </head>
 <body>
@@ -577,6 +582,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
   </div>
   <p class="in-name js-gv"></p>
   <button type="button" class="in-btn is-locked" id="bookBtn">남은시간 00:05</button>
+  <p class="in-clock" id="openClock" aria-hidden="true"></p>
   <p class="in-note">플로우 테스트판 · 대기열 없이 바로 예매 안내 → 보안문자 → 좌석 선택으로 들어가요</p>
   <button type="button" class="in-rule" data-rule>연습 규칙 보기 ›</button>
   <div class="in-dim" id="startDim">
@@ -723,6 +729,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 
 <!-- 1) 대기 순서 확인 중 -->
 <section class="nt-screen" id="screen-loading">
+  <button type="button" class="nt-wait-x" data-requeue aria-label="나가서 다시 도전"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
   <div class="nt-loading">
     <div class="nt-spinner" id="loadSpin"></div>
     <h2><span id="loadL1">대기 순서를 확인 중이에요.</span><strong id="loadL2">잠시만 기다려 주세요.</strong></h2>
@@ -732,6 +739,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
 
 <!-- 2) 대기열 -->
 <section class="nt-screen" id="screen-queue">
+  <button type="button" class="nt-wait-x" data-requeue aria-label="나가서 다시 도전"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg></button>
   <div class="nt-wait" id="waitRoot">
     <div class="nt-wait-content">
       <div class="nt-wait-title">
@@ -888,7 +896,7 @@ function paintCfg() {
   for (const [id, key] of Object.entries(SEGS)) {
     document.querySelectorAll(`#${id} input`).forEach(r => { r.checked = r.value === String(CFG[key]); });
   }
-  if (phaseIntro === 'idle') $('bookBtn').textContent = `남은시간 00:${pad2(CFG.open)}`;
+  if (phaseIntro === 'idle') { $('bookBtn').textContent = `남은시간 00:${pad2(CFG.open)}`; paintClock(); }
 }
 for (const [id, key] of Object.entries(SEGS)) {
   $(id).addEventListener('change', e => {
@@ -988,8 +996,29 @@ $('startBtn').addEventListener('click', () => {
   openAt = now() + (CFG.open + 1) * 1000;
   clearInterval(introTimer);
   introTimer = setInterval(tickIntro, 20);
-  tickIntro();
+  // 정각에 정확히 활성화 — 20ms 간격 확인을 기다리지 않는다
+  clearTimeout(openTimer); openTimer = setTimeout(tickIntro, Math.max(0, openAt - now()));
+  tickIntro(); paintClock();
 });
+/* 참고용 밀리초 시계 — '00분 00초 000'이 되는 순간이 정각(활성화) */
+let openTimer = 0, clockRaf = 0;
+function fmtClock(d) {
+  const t = ((Math.floor(d) % 3600000) + 3600000) % 3600000;
+  return `${pad2(Math.floor(t / 60000))}분 ${pad2(Math.floor(t / 1000) % 60)}초 ${String(t % 1000).padStart(3, '0')}`;
+}
+function paintClock() {
+  cancelAnimationFrame(clockRaf);
+  const el = $('openClock');
+  if (phaseIntro === 'idle') { el.textContent = fmtClock(-(CFG.open + 1) * 1000); el.classList.remove('is-open'); return; }
+  const d = now() - openAt;
+  el.textContent = fmtClock(d); el.classList.toggle('is-open', d >= 0);
+  if ($('screen-intro').classList.contains('is-active')) clockRaf = requestAnimationFrame(paintClock);
+}
+/* 대기 화면 X — 대기가 너무 길면 바로 나가서 같은 설정으로 다시 도전 */
+document.querySelectorAll('[data-requeue]').forEach(b => b.addEventListener('click', () => {
+  try { sessionStorage.setItem('nt_autostart', '1'); } catch (e) {}
+  location.reload();
+}));
 /* 닫기 — 설정 팝업만 닫는다. 아래 버튼을 누르면 다시 열린다 */
 $('cancelBtn').addEventListener('click', () => { $('startDim').hidden = true; });
 $('startDim').addEventListener('click', e => { if (e.target === $('startDim')) $('startDim').hidden = true; });
@@ -1009,6 +1038,8 @@ function tickIntro() {
 /* 예매하기 — 켜지기 전 클릭은 무시하고, 켜진 뒤 첫 클릭만 반영한다 */
 $('bookBtn').addEventListener('pointerdown', e => {
   if (phaseIntro === 'idle') { $('startDim').hidden = false; return; }   // 설정을 닫았으면 다시 연다
+  // 코드상 정각에 활성화 — 정각이 지났으면(색이 아직 안 바뀌었어도) 접수, 정각 전 클릭은 무시
+  if (phaseIntro === 'count' && now() >= openAt) tickIntro();
   if (phaseIntro === 'count') { preClicks++; return; }
   /* 몰림으로 응답이 늦는 동안 예매하기를 또 누르면 앞 요청은 버려지고 새 요청이 들어간다.
      순번은 마지막으로 누른 시각 기준으로 다시 정해지고, 응답 대기도 처음부터 다시 걸린다 */
@@ -1487,8 +1518,8 @@ function buildSellOrder() {
   const nbr = (i, d) => { const s = seats[i]; return at.get(`${s.bi}-${s.row}-${s.col + d}`); };
   const taken = new Uint8Array(N), single = new Uint8Array(N), late = new Uint8Array(N);
   const shuffle = a => { for (let x = a.length - 1; x > 0; x--) { const y = Math.floor(Math.random() * (x + 1)); [a[x], a[y]] = [a[y], a[x]]; } return a; };
-  /* 한 사람이 사는 매수 — 1매 3% · 2매 20% · 3매 7% · 4매 70% */
-  const kPick = () => { const r = Math.random(); return r < .03 ? 1 : r < .23 ? 2 : r < .30 ? 3 : 4; };
+  /* 한 사람이 사는 매수 — 1매 5% · 2매 27% · 3매 8% · 4매 60% */
+  const kPick = () => { const r = Math.random(); return r < .05 ? 1 : r < .32 ? 2 : r < .40 ? 3 : 4; };
   /* 한 번의 구매: 고른 자리에서 같은 열 오른쪽·왼쪽으로 붙은 빈자리를 k석까지 함께 산다.
      그래서 4연석이 가장 먼저 사라지고 3 > 2 > 단석 순으로 남는다 */
   /* 통로(열의 양 끝)에서 몇 번째 자리인지 — 0이면 통로 바로 옆 */
@@ -1497,8 +1528,8 @@ function buildSellOrder() {
   const aisle = i => { const s = seats[i]; return Math.min(s.col - 1, rowLen.get(`${s.bi}-${s.row}`) - s.col); };
   const grab = (i, k) => {
     const out = [i]; taken[i] = 1;
-    // 통로에 가까운 쪽으로 먼저 붙여 산다 — 통로 자리가 혼자 남지 않게
-    const s0 = seats[i], leftFirst = s0.col - 1 <= rowLen.get(`${s0.bi}-${s0.row}`) - s0.col;
+    // 대개 통로에 가까운 쪽으로 먼저 붙여 산다 — 통로 자리가 혼자 남지 않게. 35%는 반대쪽부터 — 그 사이에 1~3석 구멍이 남는다
+    const s0 = seats[i], leftFirst = (s0.col - 1 <= rowLen.get(`${s0.bi}-${s0.row}`) - s0.col) !== (aisle(i) > 0 && Math.random() < 0.35);
     let a = nbr(i, leftFirst ? -1 : 1), b = nbr(i, leftFirst ? 1 : -1);
     const da = leftFirst ? -1 : 1, db = -da;
     while (out.length < k) {
@@ -1515,8 +1546,8 @@ function buildSellOrder() {
   const prefKey = i => {
     const [base, width] = BAND[prefGroup(seats[i])];
     if (Math.random() < 0.04) return Math.random() * (base + width);   // 4%는 순서와 상관없이 — 단, 자기 그룹 차례가 끝나기 전에는 팔린다
-    const u = Math.random() * 0.6 + Math.min(aisle(i), 3) * 0.25;   // 0 ~ 1.35, 통로 쪽이 작다
-    return base + u / 1.35 * width;
+    const u = Math.random() * 1.5 + Math.min(aisle(i), 3) * 0.25;   // 0 ~ 2.25, 통로 쪽이 조금 작다
+    return base + u / 2.25 * width;
   };
   // 일반 예매에 안 풀리는 약 24%(선예매·구단 배정분) — 좋은 자리 위주(90%)로, 몇 석씩 묶어서 처음부터 팔린 상태
   const pre = [], preTarget = Math.round(N * (1 - PUBLIC));
@@ -1552,7 +1583,15 @@ function buildSellOrder() {
   // 선호도 순서대로 구매가 일어난다 (늦게 남는 자리는 자기 차례에 한 석씩)
   const seeds = rest.filter(i => !single[i] && !late[i]).map(i => ({ i, k: prefKey(i) })).sort((a, b) => a.k - b.k);
   const events = [];
-  for (const { i, k } of seeds) if (!taken[i]) events.push({ k, list: grab(i, kPick()) });
+  const freeRun = i => { let n = 1, j = nbr(i, -1); while (j != null && !taken[j]) { n++; j = nbr(j, -1); } j = nbr(i, 1); while (j != null && !taken[j]) { n++; j = nbr(j, 1); } return n; };
+  for (const { i, k } of seeds) {
+    if (taken[i]) continue;
+    const want = kPick();
+    if (freeRun(i) < want && Math.random() < 0.5) continue;   // 원하는 매수만큼 안 붙어 있으면 절반은 그냥 넘어간다
+    events.push({ k, list: grab(i, want) });
+  }
+  // 넘겨진 자리는 조금 늦게, 한두 석씩 사는 사람이 채운다
+  rest.filter(i => !taken[i] && !single[i] && !late[i]).forEach(i => { taken[i] = 1; events.push({ k: prefKey(i) + 0.3, list: [i] }); });
   rest.filter(i => late[i]).forEach(i => { taken[i] = 1; events.push({ k: 2.05 + Math.random() * 0.25, list: [i] }); });
   events.sort((a, b) => a.k - b.k);
   const body = events.flatMap(e => e.list);
@@ -2183,7 +2222,7 @@ if (FLOW_TEST) {
   };
   // 다른 사람들은 천천히(초당 3석) 산다 — 구역 숫자가 줄어드는 것만 보이게
   liveSeats = () => Q.entered ? Math.max(0, Q.seatsAtEntry - (now() - Q.enterAt) / 1000 * 3) : SEATS;
-  $('quickBtn').hidden = true; $('startDim').hidden = true;
+  $('quickBtn').hidden = true; $('startDim').hidden = true; $('openClock').hidden = true;
   phaseIntro = 'flow';
   $('bookBtn').classList.remove('is-locked'); $('bookBtn').classList.add('is-open'); $('bookBtn').textContent = '예매하기';
   $('bookBtn').addEventListener('pointerdown', e => { e.stopImmediatePropagation(); if (phaseIntro === 'flow') flowEnter(); }, true);
