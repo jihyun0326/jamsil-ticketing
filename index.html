@@ -674,7 +674,7 @@ button { font-family: inherit; border: 0; background: none; cursor: pointer; col
         <li>잠실 23,750석 중 <b>일반 예매분은 약 76%</b>. 나머지(선예매·구단 배정분)는 처음부터 팔린 상태예요.</li><li>좌석도 왼쪽 위에 <b>지금까지 입장한 인원</b>과 남은 좌석이 실시간으로 나와요.</li>
         <li>오픈 순간부터 팔리고, 한 사람이 같은 열의 붙은 자리를 묶어서 사요. <b>4매 60% · 2매 27% · 3매 8% · 1매 5%</b> (평균 약 3.2매). 들어와서 못 사고 나가는 사람도 있어 입장자 1명당 약 2.5석이 팔려요.</li>
         <li>먼저 팔리는 순서: <b>① 중앙·테이블·오렌지·익사이팅·레드·블루 ② 오렌지 뒤 네이비(304~309, 326~331) ③ 그 외 네이비 · 외야(네이비보다 조금 늦게, 함께)</b></li>
-        <li>그룹 순서대로 팔리고(4%만 자리를 가리지 않음), 같은 그룹 안에서는 <b>통로 쪽 자리부터</b> 팔려요.</li><li>선예매·구단 배정분(24%)도 대부분 좋은 자리에 잡혀 있어요. 그래서 <b>약 1,300~2,000번째 입장자</b>쯤 ①그룹은 매진돼요.</li><li>네이비는 오렌지 뒤쪽(304~309, 326~331)과 그 외가 같이 팔리지만 오렌지 뒤쪽이 더 빨라요. 오렌지 뒤쪽은 <b>약 4,500~5,000번째</b>에 매진돼요.</li><li>오렌지·레드·블루는 1·3루마다 몇 석씩 늦게까지 남아요. 약 2,000번째에도 10석 안팎이 보이고 약 3,500번째쯤 다 팔려요.</li>
+        <li>그룹 순서대로 팔리고(4%만 자리를 가리지 않음), 같은 그룹 안에서는 <b>통로 자리가 가장 먼저</b> 팔려요. 통로 자리는 <b>2인 &gt; 3인 &gt; 4인</b> 순으로 많이 사가요.</li><li>선예매·구단 배정분(24%)도 대부분 좋은 자리에 잡혀 있어요. 그래서 <b>약 1,300~2,000번째 입장자</b>쯤 ①그룹은 매진돼요.</li><li>네이비는 오렌지 뒤쪽(304~309, 326~331)과 그 외가 같이 팔리지만 오렌지 뒤쪽이 더 빨라요. 오렌지 뒤쪽은 <b>약 4,500~5,000번째</b>에 매진돼요.</li><li>오렌지·레드·블루는 1·3루마다 몇 석씩 늦게까지 남아요. 약 2,000번째에도 10석 안팎이 보이고 약 3,500번째쯤 다 팔려요.</li>
         <li>그래서 4연석 → 3연석 → 2연석 → 단석 순으로 사라져요.</li>
       </ul>
         <div class="rl-wrap"><table class="rl-table">
@@ -1523,6 +1523,8 @@ function buildSellOrder() {
   const shuffle = a => { for (let x = a.length - 1; x > 0; x--) { const y = Math.floor(Math.random() * (x + 1)); [a[x], a[y]] = [a[y], a[x]]; } return a; };
   /* 한 사람이 사는 매수 — 1매 5% · 2매 27% · 3매 8% · 4매 60% */
   const kPick = () => { const r = Math.random(); return r < .05 ? 1 : r < .32 ? 2 : r < .40 ? 3 : 4; };
+  /* 통로 자리를 잡는 사람 — 2인이 가장 많고 3인 > 4인 순 (1매 5% · 2매 50% · 3매 27% · 4매 18%) */
+  const kAisle = () => { const r = Math.random(); return r < .05 ? 1 : r < .55 ? 2 : r < .82 ? 3 : 4; };
   /* 한 번의 구매: 고른 자리에서 같은 열 오른쪽·왼쪽으로 붙은 빈자리를 k석까지 함께 산다.
      그래서 4연석이 가장 먼저 사라지고 3 > 2 > 단석 순으로 남는다 */
   /* 통로(열의 양 끝)에서 몇 번째 자리인지 — 0이면 통로 바로 옆 */
@@ -1545,11 +1547,11 @@ function buildSellOrder() {
   // 그룹 순서는 지키고(겹치지 않게), 같은 그룹 안에서는 통로에 가까운 자리부터. 4%만 자리를 가리지 않고 팔린다
   /* 네렌지(오렌지 뒤 네이비)와 그 외 네이비는 같이 팔리되 네렌지가 더 빨리 — 네렌지는 약 4,500번째 입장자쯤 매진되고,
      그때 그 외 네이비는 약 2/3가 팔려 있다. ①그룹은 그보다 먼저, 외야는 네이비 다음 */
-  const BAND = [[0, 1], [2, 0.74], [2, 1.16], [2.6, 0.8]];   // 외야는 그 외 네이비와 겹쳐서(조금 늦게) 팔린다   // [시작, 폭] — 폭이 좁을수록 빨리 팔린다
+  const BAND = [[0, 1], [2, 0.6], [2, 1.16], [2.6, 0.8]];   // 외야는 그 외 네이비와 겹쳐서(조금 늦게) 팔린다   // [시작, 폭] — 폭이 좁을수록 빨리 팔린다
   const prefKey = i => {
     const [base, width] = BAND[prefGroup(seats[i])];
     if (Math.random() < 0.04) return Math.random() * (base + width);   // 4%는 순서와 상관없이 — 단, 자기 그룹 차례가 끝나기 전에는 팔린다
-    const u = Math.random() * 1.5 + Math.min(aisle(i), 3) * 0.25;   // 0 ~ 2.25, 통로 쪽이 조금 작다
+    const ai = aisle(i), u = ai === 0 ? Math.random() * 0.3 : Math.random() * 1.5 + Math.min(ai, 3) * 0.25;   // 통로 바로 옆은 같은 그룹에서 거의 맨 먼저 (국룰)
     return base + u / 2.25 * width;
   };
   // 일반 예매에 안 풀리는 약 24%(선예매·구단 배정분) — 좋은 자리 위주(90%)로, 몇 석씩 묶어서 처음부터 팔린 상태
@@ -1589,13 +1591,13 @@ function buildSellOrder() {
   const freeRun = i => { let n = 1, j = nbr(i, -1); while (j != null && !taken[j]) { n++; j = nbr(j, -1); } j = nbr(i, 1); while (j != null && !taken[j]) { n++; j = nbr(j, 1); } return n; };
   for (const { i, k } of seeds) {
     if (taken[i]) continue;
-    const want = kPick();
+    const want = aisle(i) === 0 ? kAisle() : kPick();
     if (freeRun(i) < want && Math.random() < 0.5) continue;   // 원하는 매수만큼 안 붙어 있으면 절반은 그냥 넘어간다
     events.push({ k, list: grab(i, want) });
   }
   // 넘겨진 자리는 조금 늦게, 한두 석씩 사는 사람이 채운다
   rest.filter(i => !taken[i] && !single[i] && !late[i]).forEach(i => { taken[i] = 1; events.push({ k: prefKey(i) + 0.3, list: [i] }); });
-  rest.filter(i => late[i]).forEach(i => { taken[i] = 1; events.push({ k: 2.05 + Math.random() * 0.25, list: [i] }); });
+  rest.filter(i => late[i]).forEach(i => { taken[i] = 1; events.push({ k: 1.95 + Math.random() * 0.25, list: [i] }); });
   events.sort((a, b) => a.k - b.k);
   const body = events.flatMap(e => e.list);
   const singles = rest.filter(i => single[i]).map(i => ({ i, k: prefKey(i) })).sort((a, b) => a.k - b.k).map(o => o.i);
